@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LumiPlay - O Brasil em Cena</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        netflix: {
+                            base: '#141414',
+                            gray: '#808080',
+                            light: '#e5e5e5',
+                            dark: '#181818',
+                            modal: '#181818'
+                        },
+                        lumi: {
+                            green: '#22c55e',
+                            greenDark: '#16a34a',
+                            gold: '#f59e0b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    transitionDuration: {
+                        '400': '400ms',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #141414;
+            color: #e5e5e5;
+            overflow-x: hidden;
+        }
+
+        /* Ocultar barra de rolagem */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Vinhetas e Gradientes */
+        .hero-vignette {
+            background: linear-gradient(180deg, rgba(20,20,20,0) 0%, rgba(20,20,20,0.1) 40%, rgba(20,20,20,0.8) 80%, rgba(20,20,20,1) 100%),
+                        linear-gradient(90deg, rgba(20,20,20,0.9) 0%, rgba(20,20,20,0.4) 40%, rgba(20,20,20,0) 100%);
+        }
+        
+        .modal-vignette {
+            background: linear-gradient(0deg, #181818 0%, transparent 50%);
+        }
+
+        /* Efeito de Hover nos Cards */
+        .movie-card {
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+            transform-origin: center center;
+            will-change: transform;
+        }
+        
+        .movie-card-container:hover .movie-card {
+            transform: scale(1.15) translateY(-10px);
+            z-index: 50;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.9);
+        }
+
+        /* Setas do Carrossel */
+        .slider-arrow {
+            background: rgba(20, 20, 20, 0.5);
+            transition: background 0.2s ease;
+        }
+        .slider-arrow:hover {
+            background: rgba(20, 20, 20, 0.8);
+        }
+
+        /* Animação do Modal */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-animate {
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        /* Previne scroll do body quando modal está aberto */
+        body.modal-open {
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="antialiased pb-10">
+
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed w-full z-[60] transition-colors duration-400 px-4 md:px-12 py-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
+        <div class="flex items-center gap-8 md:gap-12">
+            <a href="#" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 md:w-9 md:h-9 bg-lumi-green rounded flex items-center justify-center shadow-lg">
+                    <svg viewBox="0 0 24 24" class="w-5 h-5 text-[#141414] fill-current">
+                        <circle cx="12" cy="10" r="3"/>
+                        <path d="M9 15h6v2H9z"/>
+                    </svg>
+                </div>
+                <span class="text-xl md:text-3xl font-black tracking-tighter text-white">Lumi<span class="text-lumi-green">Play</span></span>
+            </a>
+            <ul class="hidden lg:flex items-center gap-5 text-sm font-medium text-gray-300">
+                <li><a href="#" class="text-white font-bold hover:text-gray-400 transition-colors">Início</a></li>
+                <li><a href="#" class="hover:text-gray-400 transition-colors">Séries</a></li>
+                <li><a href="#" class="hover:text-gray-400 transition-colors">Filmes</a></li>
+                <li><a href="#" class="hover:text-gray-400 transition-colors">Minha Lista</a></li>
+            </ul>
+        </div>
+        <div class="flex items-center gap-4 md:gap-6 text-white text-lg">
+            <button class="hover:text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <button class="hover:text-gray-400"><i class="fa-regular fa-bell"></i></button>
+            <div class="w-8 h-8 rounded bg-lumi-gold overflow-hidden cursor-pointer">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Lumi&backgroundColor=f59e0b" alt="Avatar">
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero / Billboard -->
+    <header class="relative w-full h-[80vh] min-h-[600px] mb-8 select-none">
+        <img src="https://images.unsplash.com/photo-1533488765986-dfa2a9939acd?auto=format&fit=crop&w=1920&q=80" 
+             id="hero-img" alt="O Auto da Compadecida" class="absolute inset-0 w-full h-full object-cover object-top opacity-80">
+        <div class="absolute inset-0 hero-vignette pointer-events-none"></div>
+
+        <div class="absolute inset-0 flex flex-col justify-end px-4 md:px-12 pb-24 z-10 w-full lg:w-[50%]">
+            <h1 class="text-5xl sm:text-7xl font-black text-white leading-none mb-4 drop-shadow-2xl">
+                O AUTO DA<br>COMPADECIDA <span class="text-lumi-gold">2</span>
+            </h1>
+            <div class="flex items-center gap-3 mb-4 text-sm font-medium text-white">
+                <span class="text-lumi-green font-bold">98% Relevante</span>
+                <span class="bg-gray-800 border border-gray-600 px-1.5 py-0.5 rounded text-xs font-bold">12</span>
+                <span>2024</span>
+            </div>
+            <p class="text-lg text-white drop-shadow-lg mb-6 max-w-2xl line-clamp-3">
+                As aventuras dos icônicos trapaceiros João Grilo e Chicó no sertão da Paraíba. Mais de duas décadas depois, a dupla dinâmica retorna para provar que a amizade resiste ao tempo.
+            </p>
+            <div class="flex items-center gap-3">
+                <button class="bg-white text-black hover:bg-gray-200 px-6 py-2 md:py-3 rounded md:rounded-md font-bold text-lg flex items-center gap-3 shadow-lg">
+                    <i class="fa-solid fa-play"></i> Assistir
+                </button>
+                <button onclick="openModal(9)" class="bg-gray-500/70 text-white hover:bg-gray-500/50 px-6 py-2 md:py-3 rounded md:rounded-md font-bold text-lg flex items-center gap-3 backdrop-blur-sm">
+                    <i class="fa-solid fa-circle-info"></i> Mais informações
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Carrosséis -->
+    <main class="relative z-20 -mt-24 md:-mt-32 pb-10 flex flex-col gap-10">
+        <!-- Row 1 -->
+        <section class="relative group px-4 md:px-12">
+            <h2 class="text-xl font-bold text-white mb-2">Destaques Nacionais</h2>
+            <div class="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-3/4 z-30 opacity-0 group-hover:opacity-100 hidden md:flex cursor-pointer slider-arrow items-center justify-center rounded-r" onclick="scrollSlider('row-1', -1)">
+                <i class="fa-solid fa-chevron-left text-2xl text-white"></i>
+            </div>
+            <div id="row-1" class="flex gap-2 overflow-x-auto overflow-y-visible no-scrollbar scroll-smooth py-8 -my-8 pl-1 pr-12"></div>
+            <div class="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-3/4 z-30 opacity-0 group-hover:opacity-100 hidden md:flex cursor-pointer slider-arrow items-center justify-center rounded-l" onclick="scrollSlider('row-1', 1)">
+                <i class="fa-solid fa-chevron-right text-2xl text-white"></i>
+            </div>
+        </section>
+
+        <!-- Row 2 -->
+        <section class="relative group px-4 md:px-12 mt-4">
+            <h2 class="text-xl font-bold text-white mb-2">Aclamados pela Crítica</h2>
+            <div id="row-2" class="flex gap-2 overflow-x-auto overflow-y-visible no-scrollbar scroll-smooth py-8 -my-8 pl-1 pr-12"></div>
+        </section>
+    </main>
+
+    <footer class="text-center text-[11px] text-gray-500 px-4 pb-6">Imagens e dados: TMDB. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</footer>
+
+    <!-- Modal Base (Oculto) -->
+    <div id="movie-modal" class="fixed inset-0 z-[100] hidden items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative w-full max-w-3xl bg-netflix-modal rounded-xl shadow-2xl overflow-hidden modal-animate max-h-[90vh] overflow-y-auto no-scrollbar mx-4">
+            <!-- Botão Fechar -->
+            <button onclick="closeModal()" class="absolute top-4 right-4 z-50 w-9 h-9 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-colors border border-white/20">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Header Modal Imagem -->
+            <div class="relative h-64 sm:h-80 w-full">
+                <img id="modal-img" src="" alt="Capa" class="w-full h-full object-cover">
+                <div class="absolute inset-0 modal-vignette"></div>
+                
+                <div class="absolute bottom-6 left-6 right-6">
+                    <h2 id="modal-title" class="text-3xl sm:text-5xl font-black text-white mb-4 shadow-black drop-shadow-lg">Título</h2>
+                    <div class="flex gap-3">
+                        <button class="bg-white text-black hover:bg-gray-200 px-6 py-2 rounded font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-play"></i> Assistir
+                        </button>
+                        <!-- Botões Reativos no Modal -->
+                        <button id="btn-modal-add" class="w-10 h-10 rounded-full border-2 border-gray-400 bg-netflix-modal/50 text-white flex items-center justify-center hover:border-white transition-colors backdrop-blur">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        <button id="btn-modal-fav" class="w-10 h-10 rounded-full border-2 border-gray-400 bg-netflix-modal/50 text-white flex items-center justify-center hover:border-white transition-colors backdrop-blur">
+                            <i class="fa-regular fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados Modal -->
+            <div class="p-6 md:px-10 md:py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="md:col-span-2 space-y-4">
+                    <div class="flex items-center gap-3 text-sm font-medium">
+                        <span class="text-lumi-green font-bold">Recomendado para você</span>
+                        <span id="modal-year">2000</span>
+                        <span id="modal-rating" class="border border-gray-600 px-1.5 py-0.5 rounded text-xs text-white">16</span>
+                        <span class="border border-gray-500 text-[10px] tracking-widest px-1 py-0.5 rounded uppercase">HD</span>
+                    </div>
+                    <p id="modal-desc" class="text-sm sm:text-base text-gray-200 leading-relaxed">
+                        Sinopse longa do filme vai aqui.
+                    </p>
+                </div>
+                <div class="space-y-4 text-sm">
+                    <div>
+                        <span class="text-gray-500 block">Elenco:</span>
+                        <span id="modal-cast" class="text-gray-300">Wagner Moura, Selton Mello</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block">Direção:</span>
+                        <span id="modal-director" class="text-gray-300">José Padilha</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 block">Gêneros:</span>
+                        <span class="text-gray-300">Nacional, Drama, Ação</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Dados e Estado ---
+        const moviesData = [
+            { id: 1, title: "Cidade de Deus", year: 2002, rating: "18", img: "https://images.unsplash.com/photo-1518173946687-a4c8a383392e?auto=format&fit=crop&w=800&q=80", type: "Filme", desc: "Nas favelas do Rio de Janeiro da década de 1970, dois jovens seguem caminhos diferentes: um se torna fotógrafo e o outro, traficante de drogas.", cast: "Alexandre Rodrigues, Leandro Firmino, Alice Braga", director: "Fernando Meirelles, Kátia Lund" },
+            { id: 2, title: "Tropa de Elite", year: 2007, rating: "16", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80", type: "Filme", desc: "No caos urbano do Rio de Janeiro, o Capitão Nascimento comanda o BOPE em missões perigosas enquanto procura um substituto para seu posto.", cast: "Wagner Moura, Caio Junqueira, André Ramiro", director: "José Padilha" },
+            { id: 3, title: "Bacurau", year: 2019, rating: "16", img: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80", type: "Filme", desc: "Pouco após a morte de sua matriarca, os moradores de uma pequena cidade brasileira descobrem que a comunidade desapareceu misteriosamente da maioria dos mapas.", cast: "Sônia Braga, Udo Kier, Bárbara Colen", director: "Kleber Mendonça Filho, Juliano Dornelles" },
+            { id: 4, title: "Sintonia", year: 2019, rating: "16", img: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80", type: "Série", desc: "Três amigos de infância buscam seus sonhos na música, religião e no crime, navegando por caminhos opostos enquanto moram na mesma comunidade em São Paulo.", cast: "Christian Malheiros, Jottapê, Bruna Mascarenhas", director: "KondZilla" },
+            { id: 5, title: "Central do Brasil", year: 1998, rating: "12", img: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80", type: "Filme", desc: "A viagem emocionante de uma ex-professora amargurada e um menino órfão que buscam pelo pai do garoto no Nordeste do Brasil.", cast: "Fernanda Montenegro, Vinícius de Oliveira", director: "Walter Salles" },
+            { id: 6, title: "Cangaço Novo", year: 2023, rating: "18", img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=800&q=80", type: "Série", desc: "Ubaldo recebe uma herança que muda sua vida, conectando-o a um grupo de cangaceiros modernos que aterrorizam o sertão nordestino.", cast: "Allan Souza Lima, Alice Carvalho, Thainá Duarte", director: "Aly Muritiba, Fábio Mendonça" },
+            { id: 7, title: "Estômago", year: 2007, rating: "16", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80", type: "Filme", desc: "A ascensão de um cozinheiro migrante em uma cidade grande, usando seus dotes culinários para sobreviver entre mafiosos e prostitutas.", cast: "João Miguel, Fabiula Nascimento", director: "Marcos Jorge" },
+            { id: 8, title: "Que Horas Ela Volta?", year: 2015, rating: "12", img: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?auto=format&fit=crop&w=800&q=80", type: "Filme", desc: "A vida de uma babá e empregada doméstica leal é virada de pernas para o ar quando sua filha decidida se muda para a casa de seus patrões.", cast: "Regina Casé, Camila Márdila, Karine Teles", director: "Anna Muylaert" },
+            { id: 9, title: "O Auto da Compadecida", year: 2000, rating: "12", img: "https://images.unsplash.com/photo-1533488765986-dfa2a9939acd?auto=format&fit=crop&w=800&q=80", type: "Filme", desc: "As aventuras dos icônicos trapaceiros João Grilo e Chicó no sertão da Paraíba. Uma adaptação clássica da obra de Ariano Suassuna.", cast: "Matheus Nachtergaele, Selton Mello, Fernanda Montenegro", director: "Guel Arraes" },
+            { id: 10, title: "Dom", year: 2021, rating: "18", img: "https://images.unsplash.com/photo-1627856013091-fed6e4e04873?auto=format&fit=crop&w=800&q=80", type: "Série", desc: "A história real de Victor, um policial que dedicou a vida à guerra às drogas, e seu filho Pedro, que se tornou um dos assaltantes mais procurados do Rio.", cast: "Gabriel Leone, Flávio Tolezani, Raquel Villar", director: "Breno Silveira" }
+        ];
+
+        // Usando Sets para simular armazenamento de estado na sessão
+        const myList = new Set();
+        const myFavs = new Set();
+        let currentModalMovieId = null;
+
+        // --- TMDB: imagens oficiais (se algo falhar, as imagens originais continuam) ---
+        /* ======= COLE AQUI SUA CHAVE DO TMDB (API Key v3 ou Token de Leitura v4) ======= */
+        const TMDB_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4Njk1YjhhZDExMGNlMmEzZTNmNDhkZGZlZjM4NGYyYSIsIm5iZiI6MTc5MjUyMzg3NC4xOTgwMDAyLCJzdWIiOiI2YWQ3YmU2MmFjMmE0N2FjZDMyNDc2ZjgiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.QeIkL_mm0V8eK__Ju4BIwC6AyRAN_8eC6euSWTehatc";
+        /* ================================================================================ */
+        const NOKEY = !TMDB_KEY || TMDB_KEY.startsWith("COLE");
+        const IMG = "https://image.tmdb.org/t/p/", TTL = 7 * 864e5;
+        const HERO = { t: "O Auto da Compadecida 2", y: 2024 };
+        const LSG = k => { try { return JSON.parse(localStorage.getItem("lp_" + k)); } catch (e) { return null; } };
+        const LSS = (k, v) => { try { localStorage.setItem("lp_" + k, JSON.stringify(v)); } catch (e) {} };
+
+        function tm(path, p) {
+            const u = new URL("https://api.themoviedb.org/3" + path);
+            u.searchParams.set("language", "pt-BR");
+            for (const k in p) u.searchParams.set(k, p[k]);
+            const o = {};
+            if (TMDB_KEY.length > 40) o.headers = { Authorization: "Bearer " + TMDB_KEY };
+            else u.searchParams.set("api_key", TMDB_KEY);
+            return fetch(u, o).then(r => r.ok ? r.json() : Promise.reject(r.status));
+        }
+        const imgSrc = (m, s) => m.bd ? IMG + s + m.bd : m.img;
+        function imgErr(el, id) { el.onerror = null; el.src = getMovieById(id).img; }
+        function swapImg(el, url) { const i = new Image(); i.onload = () => { el.src = url; }; i.src = url; }
+
+        async function findBD(o) {
+            const ep = o.tv ? "/search/tv" : "/search/movie", yk = o.tv ? "first_air_date_year" : "year";
+            const pick = r => {
+                const L = (r.results || []).filter(x => x.backdrop_path);
+                return (L.find(x => x.original_language === "pt") || L[0] || {}).backdrop_path || null;
+            };
+            let bd = pick(await tm(ep, { query: o.t, [yk]: o.y }));
+            if (!bd) bd = pick(await tm(ep, { query: o.t }));
+            return bd;
+        }
+        function heroApply(bd) { const el = document.getElementById("hero-img"); if (el) swapImg(el, IMG + "w1280" + bd); }
+
+        function preloadTMDB() {
+            const c = LSG("tmdb_bd") || {};
+            moviesData.forEach(m => { if (c[m.id] && c[m.id].bd) m.bd = c[m.id].bd; });
+            if (c.hero && c.hero.bd) heroApply(c.hero.bd);
+        }
+        async function enrichTMDB() {
+            if (NOKEY) { console.info("LumiPlay: defina TMDB_KEY para carregar as imagens do TMDB."); return; }
+            const c = LSG("tmdb_bd") || {};
+            const jobs = moviesData.map(async m => {
+                const k = c[m.id];
+                if (k && Date.now() - k.ts < TTL) return;
+                try {
+                    const bd = await findBD({ t: m.title, y: m.year, tv: m.type === "Série" });
+                    c[m.id] = { bd, ts: Date.now() };
+                    if (bd) {
+                        m.bd = bd;
+                        document.querySelectorAll('img[data-mid="' + m.id + '"]').forEach(i => swapImg(i, IMG + "w780" + bd));
+                    }
+                } catch (e) {}
+            });
+            jobs.push((async () => {
+                const k = c.hero;
+                if (k && Date.now() - k.ts < TTL) return;
+                try { const bd = await findBD({ t: HERO.t, y: HERO.y, tv: false }); c.hero = { bd, ts: Date.now() }; if (bd) heroApply(bd); } catch (e) {}
+            })());
+            await Promise.all(jobs);
+            LSS("tmdb_bd", c);
+        }
+
+        // --- 2. Geração de Interface ---
+        function getMovieById(id) {
+            return moviesData.find(m => m.id === id);
+        }
+
+        // Criar Card do Filme com Hover Avançado
+        function generateCardHTML(movie) {
+            const inList = myList.has(movie.id);
+            const inFavs = myFavs.has(movie.id);
+            
+            const listIcon = inList ? "fa-check" : "fa-plus";
+            const favIcon = inFavs ? "fa-solid fa-heart text-lumi-green" : "fa-regular fa-heart";
+
+            return `
+                <div class="movie-card-container relative w-36 sm:w-48 md:w-64 shrink-0 aspect-[16/9] mb-12">
+                    <div class="movie-card absolute inset-0 bg-netflix-dark rounded-md overflow-hidden cursor-pointer shadow-md border border-gray-800" onclick="openModal(${movie.id})">
+                        
+                        <!-- Imagem Base -->
+                        <img src="${imgSrc(movie,'w780')}" data-mid="${movie.id}" onerror="imgErr(this,${movie.id})" alt="${movie.title}" class="w-full h-full object-cover">
+                        
+                        <!-- Tipo de Conteúdo (Canto) -->
+                        <div class="absolute top-2 right-2 bg-black/60 px-1.5 rounded text-[8px] font-bold tracking-wider text-white border border-gray-600">
+                            ${movie.type}
+                        </div>
+
+                        <!-- Hover Overlay (Aparece no scale-up) -->
+                        <div class="absolute inset-0 bg-netflix-dark opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end">
+                            <img src="${imgSrc(movie,'w780')}" data-mid="${movie.id}" onerror="imgErr(this,${movie.id})" alt="" class="absolute inset-0 h-2/3 w-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#181818] via-[#181818]/90 to-transparent"></div>
+                            
+                            <!-- Controles Hover -->
+                            <div class="relative p-3 z-10">
+                                <div class="flex gap-2 mb-2 items-center">
+                                    <button onclick="event.stopPropagation(); playMovie(${movie.id})" class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fa-solid fa-play text-sm ml-0.5"></i>
+                                    </button>
+                                    
+                                    <button onclick="event.stopPropagation(); toggleList(${movie.id})" class="btn-list-${movie.id} w-8 h-8 rounded-full border-2 border-gray-500 bg-[#181818]/80 text-white flex items-center justify-center hover:border-white transition-colors">
+                                        <i class="fa-solid ${listIcon} text-xs"></i>
+                                    </button>
+                                    
+                                    <button onclick="event.stopPropagation(); toggleFav(${movie.id})" class="btn-fav-${movie.id} w-8 h-8 rounded-full border-2 border-gray-500 bg-[#181818]/80 text-white flex items-center justify-center hover:border-white transition-colors">
+                                        <i class="${favIcon} text-xs"></i>
+                                    </button>
+                                </div>
+                                <h3 class="text-sm font-bold text-white truncate mb-1">${movie.title}</h3>
+                                <div class="flex items-center gap-2 text-[10px] text-gray-400 font-medium">
+                                    <span class="text-lumi-green border border-lumi-green px-1 rounded-sm">98%</span>
+                                    <span class="border border-gray-600 px-1 rounded-sm text-white">${movie.rating}</span>
+                                    <span>${movie.year}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 3. Lógica Interativa ---
+
+        // Abrir Modal de Detalhes
+        function openModal(id) {
+            const movie = getMovieById(id);
+            if(!movie) return;
+            currentModalMovieId = id;
+
+            // Preencher dados
+            const mi = document.getElementById('modal-img');
+            mi.onerror = () => { mi.onerror = null; mi.src = movie.img; };
+            mi.src = imgSrc(movie, 'w1280');
+            document.getElementById('modal-title').textContent = movie.title;
+            document.getElementById('modal-year').textContent = movie.year;
+            document.getElementById('modal-rating').textContent = movie.rating;
+            document.getElementById('modal-desc').textContent = movie.desc;
+            document.getElementById('modal-cast').textContent = movie.cast;
+            document.getElementById('modal-director').textContent = movie.director;
+
+            // Sincronizar botões do modal com estado atual
+            updateModalButtons(id);
+
+            // Mostrar modal
+            const modal = document.getElementById('movie-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.classList.add('modal-open');
+        }
+
+        // Fechar Modal
+        function closeModal() {
+            const modal = document.getElementById('movie-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.classList.remove('modal-open');
+            currentModalMovieId = null;
+        }
+
+        // Alternar Minha Lista
+        function toggleList(id) {
+            if (myList.has(id)) {
+                myList.delete(id);
+            } else {
+                myList.add(id);
+            }
+            syncUIIcons('list', id);
+        }
+
+        // Alternar Favorito
+        function toggleFav(id) {
+            if (myFavs.has(id)) {
+                myFavs.delete(id);
+            } else {
+                myFavs.add(id);
+            }
+            syncUIIcons('fav', id);
+        }
+
+        // Sincronizar UI em todos os lugares (Cards e Modal)
+        function syncUIIcons(type, id) {
+            if (type === 'list') {
+                const inList = myList.has(id);
+                // Atualizar nos cards
+                document.querySelectorAll(`.btn-list-${id}`).forEach(btn => {
+                    btn.innerHTML = `<i class="fa-solid ${inList ? 'fa-check' : 'fa-plus'} text-xs"></i>`;
+                });
+                // Atualizar no modal se estiver aberto
+                if (currentModalMovieId === id) updateModalButtons(id);
+            } 
+            else if (type === 'fav') {
+                const inFavs = myFavs.has(id);
+                document.querySelectorAll(`.btn-fav-${id}`).forEach(btn => {
+                    btn.innerHTML = `<i class="${inFavs ? 'fa-solid fa-heart text-lumi-green' : 'fa-regular fa-heart'} text-xs"></i>`;
+                });
+                if (currentModalMovieId === id) updateModalButtons(id);
+            }
+        }
+
+        // Atualiza estado visual específico dos botões do Modal
+        function updateModalButtons(id) {
+            const btnAdd = document.getElementById('btn-modal-add');
+            const btnFav = document.getElementById('btn-modal-fav');
+            
+            // Reatribuir eventos para o ID atual
+            btnAdd.onclick = () => toggleList(id);
+            btnFav.onclick = () => toggleFav(id);
+
+            // Visuais
+            btnAdd.innerHTML = `<i class="fa-solid ${myList.has(id) ? 'fa-check text-white' : 'fa-plus'}"></i>`;
+            btnFav.innerHTML = `<i class="${myFavs.has(id) ? 'fa-solid fa-heart text-lumi-green' : 'fa-regular fa-heart text-white'}"></i>`;
+        }
+
+        function playMovie(id) {
+            // Simula início de vídeo (Em um app real, abriria o player em tela cheia)
+            const movie = getMovieById(id);
+            console.log(`Iniciando a reprodução de: ${movie.title}`);
+        }
+
+        // Navbar Scroll Effect
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('bg-netflix-base');
+                nav.classList.remove('bg-gradient-to-b', 'from-black/80', 'to-transparent');
+            } else {
+                nav.classList.remove('bg-netflix-base');
+                nav.classList.add('bg-gradient-to-b', 'from-black/80', 'to-transparent');
+            }
+        });
+
+        // Carousel Scroll Automático
+        function scrollSlider(rowId, direction) {
+            const container = document.getElementById(rowId);
+            const scrollAmount = window.innerWidth * 0.6; 
+            container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+        }
+
+        // Inicialização
+        function shuffleArray(array) {
+            return [...array].sort(() => Math.random() - 0.5);
+        }
+
+        window.onload = () => {
+            preloadTMDB();
+            document.getElementById('row-1').innerHTML = shuffleArray(moviesData).map(generateCardHTML).join('');
+            document.getElementById('row-2').innerHTML = shuffleArray(moviesData).map(generateCardHTML).join('');
+            enrichTMDB();
+        };
+    </script>
+</body>
+</html>

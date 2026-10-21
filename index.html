@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#141414">
+    <title>LumiPlay - O Brasil em Cena</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        netflix: {
+                            base: '#141414',
+                            gray: '#808080',
+                            light: '#e5e5e5',
+                            dark: '#181818',
+                            modal: '#181818'
+                        },
+                        lumi: {
+                            green: '#22c55e',
+                            greenDark: '#16a34a',
+                            gold: '#f59e0b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    transitionDuration: {
+                        '400': '400ms',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html { -webkit-text-size-adjust: 100%; }
+        body {
+            background-color: #141414;
+            color: #e5e5e5;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        button, a { touch-action: manipulation; }
+
+        /* Espaço para a barra de abas no mobile */
+        @media (max-width: 1023px) {
+            body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+        }
+        @media (min-width: 1024px) {
+            body { padding-bottom: 2.5rem; }
+        }
+        #navbar { padding-top: calc(1rem + env(safe-area-inset-top, 0px)); }
+
+        /* Ocultar barra de rolagem */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Hero: proporção correta no celular */
+        .hero-h { height: 70vh; height: 70svh; min-height: 460px; max-height: 680px; }
+        @media (min-width: 1024px) { .hero-h { height: 80vh; min-height: 600px; max-height: none; } }
+
+        /* Vinhetas e Gradientes */
+        .hero-vignette {
+            background: linear-gradient(180deg, rgba(20,20,20,0) 0%, rgba(20,20,20,0.1) 40%, rgba(20,20,20,0.8) 80%, rgba(20,20,20,1) 100%),
+                        linear-gradient(90deg, rgba(20,20,20,0.9) 0%, rgba(20,20,20,0.4) 40%, rgba(20,20,20,0) 100%);
+        }
+        @media (max-width: 1023px) {
+            .hero-vignette {
+                background: linear-gradient(180deg, rgba(20,20,20,0.6) 0%, rgba(20,20,20,0) 22%, rgba(20,20,20,0.15) 45%, rgba(20,20,20,0.88) 82%, #141414 100%);
+            }
+        }
+        .modal-vignette { background: linear-gradient(0deg, #181818 0%, transparent 50%); }
+
+        /* Cards */
+        .movie-card {
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+            transform-origin: center center;
+            will-change: transform;
+        }
+        .card-overlay { opacity: 0; transition: opacity 0.3s; }
+        .touch-only { display: block; }
+
+        /* Hover só em dispositivos com mouse */
+        @media (hover: hover) and (pointer: fine) {
+            .movie-card-container:hover .movie-card {
+                transform: scale(1.15) translateY(-10px);
+                z-index: 50;
+                box-shadow: 0 15px 30px rgba(0,0,0,0.9);
+            }
+            .card-overlay:hover { opacity: 1; }
+            .touch-only { display: none; }
+        }
+        /* Toque: sem overlay de hover, feedback ao pressionar */
+        @media (hover: none), (pointer: coarse) {
+            .card-overlay { display: none; }
+            .movie-card { transition: transform 0.15s ease; }
+            .movie-card:active { transform: scale(0.97); }
+        }
+
+        /* Setas do Carrossel */
+        .slider-arrow { background: rgba(20, 20, 20, 0.5); transition: background 0.2s ease; }
+        .slider-arrow:hover { background: rgba(20, 20, 20, 0.8); }
+
+        /* Top 10 */
+        .top-num {
+            font-weight: 900; line-height: 1; letter-spacing: -0.08em;
+            font-size: 5.5rem; color: #141414;
+            -webkit-text-stroke: 3px #6b7280;
+            margin-right: -0.7rem; position: relative; z-index: 0; align-self: center; user-select: none;
+        }
+        @media (min-width: 768px) { .top-num { font-size: 8rem; margin-right: -1rem; } }
+
+        /* Animações do Modal */
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-animate { animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+        @media (min-width: 768px) { .modal-animate { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); } }
+        #modal-sheet { overscroll-behavior: contain; }
+
+        /* Previne scroll do body quando modal/player está aberto */
+        body.modal-open { overflow: hidden; }
+
+        /* Barra de abas (mobile) */
+        .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0 6px; font-size: 10px; font-weight: 600; color: #9ca3af; transition: color .2s; }
+        .tab i { font-size: 20px; }
+        .tab-active { color: #fff; }
+        .tab-active i { color: #22c55e; }
+        .safe-b { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+        /* Toast */
+        #toast { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+        @media (min-width: 1024px) { #toast { bottom: 2rem; } }
+
+        /* Player */
+        #pl-ui { transition: opacity 0.3s ease; }
+        .ui-hidden { opacity: 0; }
+        .ui-hidden * { pointer-events: none !important; }
+        .fb { opacity: 0; }
+        .fb-anim { animation: fbAnim 0.6s ease; }
+        @keyframes fbAnim { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+        input[type=range].pl-range { accent-color: #22c55e; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed w-full z-[60] transition-colors duration-400 px-4 md:px-12 pb-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">
+        <div class="flex items-center gap-8 md:gap-12">
+            <a href="#home" data-nav="home" class="flex items-center gap-2 group" aria-label="LumiPlay - Início">
+                <img src="data:image/webp;base64,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" alt="LumiPlay" width="177" height="192" class="h-10 md:h-12 w-auto shrink-0 select-none drop-shadow-lg" decoding="async">
+                <span class="text-2xl md:text-3xl font-black tracking-tighter text-white">Lumi<span class="text-lumi-green">Play</span></span>
+            </a>
+            <ul class="hidden lg:flex items-center gap-5 text-sm font-medium">
+                <li><a href="#home" data-nav="home" class="text-white font-bold hover:text-gray-400 transition-colors">Início</a></li>
+                <li><a href="#series" data-nav="series" class="text-gray-300 hover:text-gray-400 transition-colors">Séries</a></li>
+                <li><a href="#movies" data-nav="movies" class="text-gray-300 hover:text-gray-400 transition-colors">Filmes</a></li>
+                <li><a href="#list" data-nav="list" class="text-gray-300 hover:text-gray-400 transition-colors">Minha Lista</a></li>
+            </ul>
+        </div>
+        <div class="flex items-center gap-1 md:gap-3 text-white text-lg">
+            <button onclick="go('search')" aria-label="Pesquisar" class="w-10 h-10 flex items-center justify-center hover:text-gray-400"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <button id="btn-bell" onclick="toggleNotif(event)" aria-label="Notificações" class="relative w-10 h-10 flex items-center justify-center hover:text-gray-400">
+                <i class="fa-regular fa-bell"></i>
+                <span id="notif-dot" class="absolute top-2 right-2 w-2 h-2 rounded-full bg-lumi-green hidden"></span>
+            </button>
+            <button onclick="go('profile')" aria-label="Perfil" class="w-8 h-8 ml-1 rounded bg-lumi-gold overflow-hidden cursor-pointer">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Lumi&backgroundColor=f59e0b" alt="Avatar">
+            </button>
+        </div>
+    </nav>
+
+    <!-- Painel de notificações -->
+    <div id="notif-panel" class="fixed left-3 right-3 lg:left-auto lg:right-12 top-[72px] lg:w-96 z-[65] hidden bg-netflix-dark/95 backdrop-blur border border-gray-800 rounded-lg shadow-2xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-800 text-sm font-bold text-white">Novidades</div>
+        <div id="notif-list"></div>
+    </div>
+
+    <!-- ===== VIEW: INÍCIO ===== -->
+    <div id="view-home" class="view">
+        <!-- Hero / Billboard -->
+        <header class="relative w-full hero-h mb-8 select-none">
+            <img src="https://images.unsplash.com/photo-1533488765986-dfa2a9939acd?auto=format&fit=crop&w=1920&q=80"
+                 id="hero-img" alt="O Auto da Compadecida 2" class="absolute inset-0 w-full h-full object-cover object-center lg:object-top opacity-80">
+            <div class="absolute inset-0 hero-vignette pointer-events-none"></div>
+
+            <div class="absolute inset-0 flex flex-col justify-end px-4 md:px-12 pb-16 lg:pb-28 z-10 w-full lg:w-[50%]">
+                <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-none mb-3 md:mb-4 drop-shadow-2xl">
+                    O AUTO DA<br>COMPADECIDA <span class="text-lumi-gold">2</span>
+                </h1>
+                <div class="flex items-center gap-3 mb-3 md:mb-4 text-sm font-medium text-white">
+                    <span class="text-lumi-green font-bold">98% Relevante</span>
+                    <span class="bg-gray-800 border border-gray-600 px-1.5 py-0.5 rounded text-xs font-bold">12</span>
+                    <span>2024</span>
+                </div>
+                <p class="text-sm sm:text-lg text-white drop-shadow-lg mb-5 md:mb-6 max-w-2xl line-clamp-3">
+                    As aventuras dos icônicos trapaceiros João Grilo e Chicó no sertão da Paraíba. Mais de duas décadas depois, a dupla dinâmica retorna para provar que a amizade resiste ao tempo.
+                </p>
+                <div class="flex items-center gap-2 md:gap-3 w-full sm:w-auto">
+                    <button onclick="playMovie(11)" class="flex-1 sm:flex-none justify-center bg-white text-black hover:bg-gray-200 px-4 md:px-6 py-2.5 md:py-3 rounded md:rounded-md font-bold text-base md:text-lg flex items-center gap-2 md:gap-3 shadow-lg">
+                        <i class="fa-solid fa-play"></i> Assistir
+                    </button>
+                    <button onclick="openModal(11)" class="flex-1 sm:flex-none justify-center bg-gray-500/70 text-white hover:bg-gray-500/50 px-4 md:px-6 py-2.5 md:py-3 rounded md:rounded-md font-bold text-base md:text-lg flex items-center gap-2 md:gap-3 backdrop-blur-sm whitespace-nowrap">
+                        <i class="fa-solid fa-circle-info"></i> <span class="hidden min-[400px]:inline">Mais informações</span><span class="min-[400px]:hidden">Info</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main id="home-rows" class="relative z-20 -mt-12 lg:-mt-32 pb-10 flex flex-col gap-6 lg:gap-10"></main>
+    </div>
+
+    <!-- ===== VIEW: BUSCA ===== -->
+    <section id="view-search" class="view hidden pt-24 lg:pt-28 px-4 md:px-12 min-h-[80vh]">
+        <div class="flex items-center gap-3 bg-netflix-dark border border-gray-700 rounded-md px-4 h-12 focus-within:border-white transition-colors">
+            <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+            <input id="search-input" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false"
+                   placeholder="Pesquisar títulos, elenco, gêneros..."
+                   class="flex-1 min-w-0 bg-transparent outline-none text-white placeholder-gray-500 text-base">
+            <button id="search-clear" onclick="clearSearch()" aria-label="Limpar pesquisa" class="hidden text-gray-400 hover:text-white w-6 h-6 items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="search-chips" class="flex gap-2 overflow-x-auto no-scrollbar mt-4 mb-6 -mx-4 px-4 md:mx-0 md:px-0"></div>
+        <div id="search-idle"></div>
+        <div id="search-results" class="hidden">
+            <p id="search-count" class="text-sm text-gray-400 mb-3"></p>
+            <div id="search-grid"></div>
+        </div>
+    </section>
+
+    <!-- ===== VIEW: SÉRIES ===== -->
+    <section id="view-series" class="view hidden pt-24 lg:pt-28 px-4 md:px-12 min-h-[80vh]">
+        <h1 class="text-2xl md:text-3xl font-black text-white mb-4">Séries</h1>
+        <div id="chips-series" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 -mx-4 px-4 md:mx-0 md:px-0"></div>
+        <div id="grid-series"></div>
+    </section>
+
+    <!-- ===== VIEW: FILMES ===== -->
+    <section id="view-movies" class="view hidden pt-24 lg:pt-28 px-4 md:px-12 min-h-[80vh]">
+        <h1 class="text-2xl md:text-3xl font-black text-white mb-4">Filmes</h1>
+        <div id="chips-movies" class="flex gap-2 overflow-x-auto no-scrollbar mb-5 -mx-4 px-4 md:mx-0 md:px-0"></div>
+        <div id="grid-movies"></div>
+    </section>
+
+    <!-- ===== VIEW: MINHA LISTA ===== -->
+    <section id="view-list" class="view hidden pt-24 lg:pt-28 px-4 md:px-12 min-h-[80vh]">
+        <h1 class="text-2xl md:text-3xl font-black text-white mb-4">Minha Lista</h1>
+        <div id="list-tabs" class="inline-flex bg-netflix-dark border border-gray-800 rounded-md p-1 mb-6 text-sm font-bold"></div>
+        <div id="list-content"></div>
+    </section>
+
+    <!-- ===== VIEW: PERFIL ===== -->
+    <section id="view-profile" class="view hidden pt-24 lg:pt-28 px-4 md:px-12 min-h-[80vh]">
+        <div class="max-w-xl mx-auto">
+            <div class="flex flex-col items-center text-center mb-8">
+                <div class="w-24 h-24 rounded-lg bg-lumi-gold overflow-hidden mb-3 shadow-xl">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Lumi&backgroundColor=f59e0b" alt="Avatar">
+                </div>
+                <h1 class="text-2xl font-black text-white">Lumi</h1>
+                <p class="text-sm text-gray-400">Perfil principal</p>
+            </div>
+            <div id="profile-stats" class="grid grid-cols-3 gap-2 mb-8"></div>
+
+            <h2 class="text-lg font-bold text-white mb-2">Configurações</h2>
+            <div class="bg-netflix-dark border border-gray-800 rounded-lg divide-y divide-gray-800 mb-6">
+                <div class="flex items-center justify-between gap-4 p-4">
+                    <div>
+                        <p class="text-white font-medium">Próximo episódio automático</p>
+                        <p class="text-xs text-gray-400">Começa o próximo episódio ao terminar o atual.</p>
+                    </div>
+                    <button id="set-autonext" onclick="toggleAutoNext()" role="switch" aria-label="Próximo episódio automático" class="relative shrink-0 w-11 h-6 rounded-full transition-colors">
+                        <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform"></span>
+                    </button>
+                </div>
+                <button onclick="clearProgress()" class="w-full flex items-center justify-between p-4 text-left hover:bg-white/5">
+                    <span class="text-white font-medium">Limpar “Continuar Assistindo”</span><i class="fa-solid fa-chevron-right text-gray-500 text-sm"></i>
+                </button>
+                <button onclick="clearRecent(true)" class="w-full flex items-center justify-between p-4 text-left hover:bg-white/5">
+                    <span class="text-white font-medium">Limpar histórico de pesquisa</span><i class="fa-solid fa-chevron-right text-gray-500 text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <footer class="text-center text-[11px] text-gray-500 px-4 pb-6 mt-6">Imagens e dados: TMDB. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</footer>
+
+    <!-- Barra de abas (mobile/tablet) -->
+    <nav class="fixed bottom-0 inset-x-0 z-[70] lg:hidden bg-[#141414]/95 backdrop-blur border-t border-white/10 safe-b">
+        <div class="grid grid-cols-5 max-w-xl mx-auto">
+            <a href="#home" data-nav="home" class="tab"><i class="fa-solid fa-house"></i><span>Início</span></a>
+            <a href="#series" data-nav="series" class="tab"><i class="fa-solid fa-tv"></i><span>Séries</span></a>
+            <a href="#movies" data-nav="movies" class="tab"><i class="fa-solid fa-film"></i><span>Filmes</span></a>
+            <a href="#search" data-nav="search" class="tab"><i class="fa-solid fa-magnifying-glass"></i><span>Buscar</span></a>
+            <a href="#list" data-nav="list" class="tab"><i class="fa-solid fa-bookmark"></i><span>Minha Lista</span></a>
+        </div>
+    </nav>
+
+    <!-- Modal de detalhes (bottom sheet no celular) -->
+    <div id="movie-modal" class="fixed inset-0 z-[100] hidden items-end md:items-center justify-center">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" style="touch-action:none" onclick="closeModal()"></div>
+
+        <div id="modal-sheet" class="relative w-full md:max-w-3xl bg-netflix-modal rounded-t-2xl md:rounded-xl shadow-2xl overflow-hidden modal-animate max-h-[92vh] md:max-h-[90vh] overflow-y-auto no-scrollbar md:mx-4" style="max-height:min(92svh,900px)">
+            <div class="md:hidden absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full bg-white/40 z-50"></div>
+            <button onclick="closeModal()" aria-label="Fechar" class="absolute top-4 right-4 z-50 w-9 h-9 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-colors border border-white/20">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="relative h-56 sm:h-72 md:h-80 w-full">
+                <img id="modal-img" src="" alt="Capa" class="w-full h-full object-cover">
+                <div class="absolute inset-0 modal-vignette"></div>
+
+                <div class="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6">
+                    <h2 id="modal-title" class="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-3 md:mb-4 shadow-black drop-shadow-lg leading-tight">Título</h2>
+                    <div class="flex gap-2 md:gap-3 items-center">
+                        <button onclick="playMovie(currentModalMovieId)" class="flex-1 md:flex-none justify-center bg-white text-black hover:bg-gray-200 px-6 py-2.5 md:py-2 rounded font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-play"></i> <span id="modal-play-label">Assistir</span>
+                        </button>
+                        <button id="btn-modal-add" aria-label="Minha Lista" class="shrink-0 w-10 h-10 rounded-full border-2 border-gray-400 bg-netflix-modal/50 text-white flex items-center justify-center hover:border-white transition-colors backdrop-blur">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        <button id="btn-modal-fav" aria-label="Favoritar" class="shrink-0 w-10 h-10 rounded-full border-2 border-gray-400 bg-netflix-modal/50 text-white flex items-center justify-center hover:border-white transition-colors backdrop-blur">
+                            <i class="fa-regular fa-heart"></i>
+                        </button>
+                        <button onclick="shareCurrent()" aria-label="Compartilhar" class="shrink-0 w-10 h-10 rounded-full border-2 border-gray-400 bg-netflix-modal/50 text-white flex items-center justify-center hover:border-white transition-colors backdrop-blur">
+                            <i class="fa-solid fa-share-nodes text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 pb-6 md:px-10 md:py-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-8">
+                    <div class="md:col-span-2 space-y-3 md:space-y-4">
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium">
+                            <span class="text-lumi-green font-bold">Recomendado para você</span>
+                            <span id="modal-year">2000</span>
+                            <span id="modal-rating" class="border border-gray-600 px-1.5 py-0.5 rounded text-xs text-white">16</span>
+                            <span class="border border-gray-500 text-[10px] tracking-widest px-1 py-0.5 rounded uppercase">HD</span>
+                            <span id="modal-type" class="text-gray-400"></span>
+                        </div>
+                        <p id="modal-desc" class="text-sm sm:text-base text-gray-200 leading-relaxed">Sinopse.</p>
+                    </div>
+                    <div class="space-y-3 md:space-y-4 text-sm">
+                        <div>
+                            <span class="text-gray-500 block">Elenco:</span>
+                            <span id="modal-cast" class="text-gray-300">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 block">Direção:</span>
+                            <span id="modal-director" class="text-gray-300">-</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 block">Gêneros:</span>
+                            <span id="modal-genres" class="text-gray-300">Nacional</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="modal-eps-wrap" class="mt-8 hidden">
+                    <h3 class="text-lg md:text-xl font-bold text-white mb-2">Episódios</h3>
+                    <div id="modal-eps"></div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-lg md:text-xl font-bold text-white mb-3">Títulos semelhantes</h3>
+                    <div id="modal-similar" class="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player -->
+    <div id="player" class="fixed inset-0 z-[200] bg-black hidden select-none overflow-hidden">
+        <video id="pl-video" class="absolute inset-0 w-full h-full object-contain bg-black" playsinline preload="metadata"></video>
+        <div id="pl-tap" class="absolute inset-0"></div>
+
+        <!-- Feedback de toque duplo -->
+        <div id="pl-fb-l" class="fb absolute left-0 top-0 bottom-0 w-1/3 flex flex-col items-center justify-center text-white pointer-events-none" style="background:radial-gradient(ellipse at left, rgba(255,255,255,.18), transparent 70%)">
+            <i class="fa-solid fa-backward text-3xl"></i><span class="text-sm font-bold mt-1">10 s</span>
+        </div>
+        <div id="pl-fb-r" class="fb absolute right-0 top-0 bottom-0 w-1/3 flex flex-col items-center justify-center text-white pointer-events-none" style="background:radial-gradient(ellipse at right, rgba(255,255,255,.18), transparent 70%)">
+            <i class="fa-solid fa-forward text-3xl"></i><span class="text-sm font-bold mt-1">10 s</span>
+        </div>
+
+        <!-- Carregando -->
+        <div id="pl-spin" class="absolute inset-0 hidden items-center justify-center pointer-events-none">
+            <i class="fa-solid fa-circle-notch fa-spin text-5xl text-lumi-green"></i>
+        </div>
+
+        <!-- Controles -->
+        <div id="pl-ui" class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+            <div class="pointer-events-auto bg-gradient-to-b from-black/80 to-transparent pb-10 flex items-center gap-3" style="padding-top:max(env(safe-area-inset-top),12px);padding-left:max(env(safe-area-inset-left),16px);padding-right:max(env(safe-area-inset-right),16px)">
+                <button onclick="closePlayer()" aria-label="Voltar" class="w-10 h-10 rounded-full flex items-center justify-center text-white text-xl hover:bg-white/10"><i class="fa-solid fa-arrow-left"></i></button>
+                <div class="min-w-0 flex-1">
+                    <p id="pl-title" class="text-white font-bold text-base md:text-xl truncate"></p>
+                    <p id="pl-sub" class="text-xs md:text-sm text-gray-300 truncate"></p>
+                </div>
+                <button id="pl-pip" onclick="togglePip()" aria-label="Picture in Picture" class="hidden w-10 h-10 rounded-full items-center justify-center text-white text-lg hover:bg-white/10"><i class="fa-regular fa-window-restore"></i></button>
+            </div>
+
+            <!-- Centro -->
+            <div class="absolute inset-0 flex items-center justify-center gap-8 md:gap-14 pointer-events-none">
+                <button onclick="skip(-10)" aria-label="Voltar 10 segundos" class="pointer-events-auto relative w-14 h-14 flex items-center justify-center text-white hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-rotate-left text-4xl"></i><span class="absolute text-[10px] font-bold pt-0.5">10</span>
+                </button>
+                <button onclick="togglePlay()" aria-label="Reproduzir/Pausar" class="pointer-events-auto w-[72px] h-[72px] md:w-20 md:h-20 rounded-full bg-black/40 border-2 border-white/70 text-white flex items-center justify-center hover:scale-105 hover:bg-black/60 transition-all">
+                    <i id="pl-play-icon" class="fa-solid fa-play text-3xl ml-1"></i>
+                </button>
+                <button onclick="skip(10)" aria-label="Avançar 10 segundos" class="pointer-events-auto relative w-14 h-14 flex items-center justify-center text-white hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-rotate-right text-4xl"></i><span class="absolute text-[10px] font-bold pt-0.5">10</span>
+                </button>
+            </div>
+
+            <!-- Rodapé -->
+            <div class="pointer-events-auto bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-12" style="padding-bottom:max(env(safe-area-inset-bottom),12px);padding-left:max(env(safe-area-inset-left),16px);padding-right:max(env(safe-area-inset-right),16px)">
+                <div class="flex items-center gap-3">
+                    <div id="pl-seek" class="relative flex-1 h-8 flex items-center cursor-pointer" style="touch-action:none">
+                        <div class="relative w-full h-1 bg-white/25 rounded-full">
+                            <div id="pl-buf" class="absolute inset-y-0 left-0 bg-white/30 rounded-full" style="width:0%"></div>
+                            <div id="pl-fill" class="absolute inset-y-0 left-0 bg-lumi-green rounded-full" style="width:0%"></div>
+                            <div id="pl-thumb" class="absolute top-1/2 w-3.5 h-3.5 -ml-[7px] -translate-y-1/2 bg-lumi-green rounded-full shadow-lg" style="left:0%"></div>
+                        </div>
+                    </div>
+                    <div class="text-xs md:text-sm text-gray-200 font-medium tabular-nums whitespace-nowrap"><span id="pl-cur">0:00</span> / <span id="pl-dur">0:00</span></div>
+                </div>
+                <div class="flex items-center justify-between mt-1">
+                    <div class="hidden md:flex items-center gap-2">
+                        <button onclick="toggleMute()" aria-label="Mudo" class="w-10 h-10 text-white text-xl flex items-center justify-center hover:text-gray-300"><i id="pl-vol-icon" class="fa-solid fa-volume-high"></i></button>
+                        <input id="pl-vol" type="range" min="0" max="1" step="0.05" value="1" class="pl-range w-24" aria-label="Volume">
+                    </div>
+                    <div class="flex items-center gap-1 md:gap-3 ml-auto w-full md:w-auto justify-around md:justify-end">
+                        <button onclick="openSpeed()" class="flex flex-col items-center justify-center min-w-[56px] py-1 text-white hover:text-gray-300">
+                            <span id="pl-speed-lbl" class="text-base font-bold leading-6">1x</span><span class="text-[10px] text-gray-300">Velocidade</span>
+                        </button>
+                        <button id="pl-eps-btn" onclick="openEpisodes()" class="hidden flex-col items-center justify-center min-w-[56px] py-1 text-white hover:text-gray-300">
+                            <i class="fa-solid fa-layer-group text-lg leading-6"></i><span class="text-[10px] text-gray-300">Episódios</span>
+                        </button>
+                        <button id="pl-next-btn" onclick="playNext()" class="hidden flex-col items-center justify-center min-w-[56px] py-1 text-white hover:text-gray-300">
+                            <i class="fa-solid fa-forward-step text-lg leading-6"></i><span class="text-[10px] text-gray-300">Próximo</span>
+                        </button>
+                        <button onclick="toggleFs()" class="flex flex-col items-center justify-center min-w-[56px] py-1 text-white hover:text-gray-300">
+                            <i id="pl-fs-icon" class="fa-solid fa-expand text-lg leading-6"></i><span class="text-[10px] text-gray-300">Tela cheia</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fim do vídeo -->
+        <div id="pl-end" class="absolute inset-0 z-20 hidden flex-col items-center justify-center bg-black/85 text-center px-6"></div>
+
+        <!-- Erro -->
+        <div id="pl-err" class="absolute inset-0 z-20 hidden flex-col items-center justify-center bg-black text-center px-6">
+            <i class="fa-solid fa-triangle-exclamation text-4xl text-lumi-gold mb-4"></i>
+            <p class="text-white font-bold text-lg mb-1">Não foi possível reproduzir</p>
+            <p class="text-sm text-gray-400 max-w-xs mb-5">Verifique sua conexão e tente novamente.</p>
+            <div class="flex gap-3">
+                <button onclick="retryPlayer()" class="bg-white text-black px-6 py-2.5 rounded font-bold">Tentar novamente</button>
+                <button onclick="closePlayer()" class="bg-gray-500/70 text-white px-6 py-2.5 rounded font-bold">Voltar</button>
+            </div>
+        </div>
+
+        <!-- Diálogo (velocidade / episódios) -->
+        <div id="pl-dialog" class="absolute inset-0 z-30 hidden items-end md:items-center justify-center bg-black/60" onclick="if(event.target===this)closeDialog()">
+            <div id="pl-dialog-box" class="w-full md:max-w-md bg-netflix-modal border border-gray-800 rounded-t-2xl md:rounded-xl max-h-[85vh] overflow-y-auto no-scrollbar p-4 modal-animate" style="max-height:85svh;padding-bottom:max(env(safe-area-inset-bottom),16px)"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed left-1/2 -translate-x-1/2 z-[150] bg-[#2a2a2a] border border-gray-700 text-white text-sm px-4 py-2.5 rounded-md shadow-xl opacity-0 pointer-events-none transition-opacity duration-300 whitespace-nowrap max-w-[90vw] truncate"></div>
+
+    <script>
+        // ================= Utilitários =================
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        const LSG = k => { try { return JSON.parse(localStorage.getItem("lp_" + k)); } catch (e) { return null; } };
+        const LSS = (k, v) => { try { localStorage.setItem("lp_" + k, JSON.stringify(v)); } catch (e) {} };
+        const shuffleArray = a => [...a].sort(() => Math.random() - 0.5);
+
+        // ================= 1. Dados e Estado =================
+        const HERO_ID = 11;
+        const moviesData = [
+            { id: 1, title: "Cidade de Deus", year: 2002, rating: "18", img: "https://images.unsplash.com/photo-1518173946687-a4c8a383392e?auto=format&fit=crop&w=800&q=80", type: "Filme", genres: ["Drama", "Crime"], desc: "Nas favelas do Rio de Janeiro da década de 1970, dois jovens seguem caminhos diferentes: um se torna fotógrafo e o outro, traficante de drogas.", cast: "Alexandre Rodrigues, Leandro Firmino, Alice Braga", director: "Fernando Meirelles, Kátia Lund" },
+            { id: 2, title: "Tropa de Elite", year: 2007, rating: "16", img: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80", type: "Filme", genres: ["Ação", "Crime"], desc: "No caos urbano do Rio de Janeiro, o Capitão Nascimento comanda o BOPE em missões perigosas enquanto procura um substituto para seu posto.", cast: "Wagner Moura, Caio Junqueira, André Ramiro", director: "José Padilha" },
+            { id: 3, title: "Bacurau", year: 2019, rating: "16", img: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80", type: "Filme", genres: ["Drama", "Suspense"], desc: "Pouco após a morte de sua matriarca, os moradores de uma pequena cidade brasileira descobrem que a comunidade desapareceu misteriosamente da maioria dos mapas.", cast: "Sônia Braga, Udo Kier, Bárbara Colen", director: "Kleber Mendonça Filho, Juliano Dornelles" },
+            { id: 4, title: "Sintonia", year: 2019, rating: "16", img: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80", type: "Série", eps: 8, genres: ["Drama", "Crime"], desc: "Três amigos de infância buscam seus sonhos na música, religião e no crime, navegando por caminhos opostos enquanto moram na mesma comunidade em São Paulo.", cast: "Christian Malheiros, Jottapê, Bruna Mascarenhas", director: "KondZilla" },
+            { id: 5, title: "Central do Brasil", year: 1998, rating: "12", img: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80", type: "Filme", genres: ["Drama", "Aventura"], desc: "A viagem emocionante de uma ex-professora amargurada e um menino órfão que buscam pelo pai do garoto no Nordeste do Brasil.", cast: "Fernanda Montenegro, Vinícius de Oliveira", director: "Walter Salles" },
+            { id: 6, title: "Cangaço Novo", year: 2023, rating: "18", img: "https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&w=800&q=80", type: "Série", eps: 8, genres: ["Ação", "Drama"], desc: "Ubaldo recebe uma herança que muda sua vida, conectando-o a um grupo de cangaceiros modernos que aterrorizam o sertão nordestino.", cast: "Allan Souza Lima, Alice Carvalho, Thainá Duarte", director: "Aly Muritiba, Fábio Mendonça" },
+            { id: 7, title: "Estômago", year: 2007, rating: "16", img: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80", type: "Filme", genres: ["Comédia", "Drama"], desc: "A ascensão de um cozinheiro migrante em uma cidade grande, usando seus dotes culinários para sobreviver entre mafiosos e prostitutas.", cast: "João Miguel, Fabiula Nascimento", director: "Marcos Jorge" },
+            { id: 8, title: "Que Horas Ela Volta?", year: 2015, rating: "12", img: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?auto=format&fit=crop&w=800&q=80", type: "Filme", genres: ["Drama", "Comédia"], desc: "A vida de uma babá e empregada doméstica leal é virada de pernas para o ar quando sua filha decidida se muda para a casa de seus patrões.", cast: "Regina Casé, Camila Márdila, Karine Teles", director: "Anna Muylaert" },
+            { id: 9, title: "O Auto da Compadecida", year: 2000, rating: "12", img: "https://images.unsplash.com/photo-1533488765986-dfa2a9939acd?auto=format&fit=crop&w=800&q=80", type: "Filme", genres: ["Comédia", "Aventura"], desc: "As aventuras dos icônicos trapaceiros João Grilo e Chicó no sertão da Paraíba. Uma adaptação clássica da obra de Ariano Suassuna.", cast: "Matheus Nachtergaele, Selton Mello, Fernanda Montenegro", director: "Guel Arraes" },
+            { id: 10, title: "Dom", year: 2021, rating: "18", img: "https://images.unsplash.com/photo-1627856013091-fed6e4e04873?auto=format&fit=crop&w=800&q=80", type: "Série", eps: 8, genres: ["Crime", "Drama"], desc: "A história real de Victor, um policial que dedicou a vida à guerra às drogas, e seu filho Pedro, que se tornou um dos assaltantes mais procurados do Rio.", cast: "Gabriel Leone, Flávio Tolezani, Raquel Villar", director: "Breno Silveira" },
+            { id: 11, title: "O Auto da Compadecida 2", year: 2024, rating: "12", img: "https://images.unsplash.com/photo-1533488765986-dfa2a9939acd?auto=format&fit=crop&w=800&q=80", type: "Filme", genres: ["Comédia", "Aventura"], desc: "As aventuras dos icônicos trapaceiros João Grilo e Chicó no sertão da Paraíba. Mais de duas décadas depois, a dupla dinâmica retorna para provar que a amizade resiste ao tempo.", cast: "Matheus Nachtergaele, Selton Mello, Virginia Cavendish", director: "Guel Arraes" }
+        ];
+        // Para usar seus próprios vídeos, adicione  src: "https://.../video.mp4"  em qualquer título acima.
+        const DEMO_SRC = [
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        ];
+        const TOP10_IDS = [11, 2, 1, 6, 10, 3, 4, 8, 9, 5];
+        const GENRES = [...new Set(moviesData.flatMap(m => m.genres))].sort((a, b) => a.localeCompare(b, 'pt'));
+        const order = { destaques: shuffleArray(moviesData), aclamados: shuffleArray(moviesData) };
+
+        // Estado persistido
+        const myList = new Set(LSG('list') || []);
+        const myFavs = new Set(LSG('favs') || []);
+        const watched = new Set(LSG('watched') || []);
+        let progress = LSG('prog') || {};
+        let recent = LSG('recent') || [];
+        let settings = Object.assign({ autonext: true }, LSG('settings') || {});
+        function persist() { LSS('list', [...myList]); LSS('favs', [...myFavs]); LSS('watched', [...watched]); LSS('prog', progress); }
+
+        let currentModalMovieId = null;
+        let currentView = 'home';
+        let homeDirty = false;
+        let modalHist = false, playerHist = false;
+
+        function getMovieById(id) { return moviesData.find(m => m.id === id); }
+
+        // ================= TMDB: imagens oficiais =================
+        /* ======= COLE AQUI SUA CHAVE DO TMDB (API Key v3 ou Token de Leitura v4) ======= */
+        const TMDB_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4Njk1YjhhZDExMGNlMmEzZTNmNDhkZGZlZjM4NGYyYSIsIm5iZiI6MTc5MjUyMzg3NC4xOTgwMDAyLCJzdWIiOiI2YWQ3YmU2MmFjMmE0N2FjZDMyNDc2ZjgiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.QeIkL_mm0V8eK__Ju4BIwC6AyRAN_8eC6euSWTehatc";
+        /* ================================================================================ */
+        const NOKEY = !TMDB_KEY || TMDB_KEY.startsWith("COLE");
+        const IMG = "https://image.tmdb.org/t/p/", TTL = 7 * 864e5;
+
+        function tm(path, p) {
+            const u = new URL("https://api.themoviedb.org/3" + path);
+            u.searchParams.set("language", "pt-BR");
+            for (const k in p) u.searchParams.set(k, p[k]);
+            const o = {};
+            if (TMDB_KEY.length > 40) o.headers = { Authorization: "Bearer " + TMDB_KEY };
+            else u.searchParams.set("api_key", TMDB_KEY);
+            return fetch(u, o).then(r => r.ok ? r.json() : Promise.reject(r.status));
+        }
+        const imgSrc = (m, s) => m.bd ? IMG + s + m.bd : m.img;
+        function imgErr(el, id) { el.onerror = null; el.src = getMovieById(id).img; }
+        function swapImg(el, url) { const i = new Image(); i.onload = () => { el.src = url; }; i.src = url; }
+
+        async function findBD(o) {
+            const ep = o.tv ? "/search/tv" : "/search/movie", yk = o.tv ? "first_air_date_year" : "year";
+            const pick = r => {
+                const L = (r.results || []).filter(x => x.backdrop_path);
+                return (L.find(x => x.original_language === "pt") || L[0] || {}).backdrop_path || null;
+            };
+            let bd = pick(await tm(ep, { query: o.t, [yk]: o.y }));
+            if (!bd) bd = pick(await tm(ep, { query: o.t }));
+            return bd;
+        }
+        function heroApply(bd) { const el = $("hero-img"); if (el) swapImg(el, IMG + "w1280" + bd); }
+
+        function preloadTMDB() {
+            const c = LSG("tmdb_bd") || {};
+            moviesData.forEach(m => { if (c[m.id] && c[m.id].bd) m.bd = c[m.id].bd; });
+            const h = getMovieById(HERO_ID);
+            if (h.bd) heroApply(h.bd);
+        }
+        async function enrichTMDB() {
+            if (NOKEY) { console.info("LumiPlay: defina TMDB_KEY para carregar as imagens do TMDB."); return; }
+            const c = LSG("tmdb_bd") || {};
+            const jobs = moviesData.map(async m => {
+                const k = c[m.id];
+                if (k && Date.now() - k.ts < TTL) return;
+                try {
+                    const bd = await findBD({ t: m.title, y: m.year, tv: m.type === "Série" });
+                    c[m.id] = { bd, ts: Date.now() };
+                    if (bd) {
+                        m.bd = bd;
+                        document.querySelectorAll('img[data-mid="' + m.id + '"]').forEach(i => swapImg(i, IMG + "w780" + bd));
+                        if (m.id === HERO_ID) heroApply(bd);
+                    }
+                } catch (e) {}
+            });
+            await Promise.all(jobs);
+            LSS("tmdb_bd", c);
+        }
+
+        // ================= 2. Geração de Interface =================
+        function generateCardHTML(movie, o = {}) {
+            const inList = myList.has(movie.id);
+            const inFavs = myFavs.has(movie.id);
+            const listIcon = inList ? "fa-check" : "fa-plus";
+            const favIcon = inFavs ? "fa-solid fa-heart text-lumi-green" : "fa-regular fa-heart";
+            const pg = o.progress && progress[movie.id] ? Math.round(progress[movie.id].pct * 100) : -1;
+            const wrap = o.grid
+                ? 'relative w-full aspect-[16/9]'
+                : `relative ${o.w || 'w-[44vw] sm:w-48 md:w-64'} shrink-0 aspect-[16/9] mb-0 md:mb-12`;
+
+            const box = `
+                <div class="movie-card-container ${wrap}">
+                    <div class="movie-card absolute inset-0 bg-netflix-dark rounded-md overflow-hidden cursor-pointer shadow-md border border-gray-800" onclick="openModal(${movie.id})" title="${esc(movie.title)}">
+
+                        <img src="${imgSrc(movie, 'w780')}" data-mid="${movie.id}" loading="lazy" onerror="imgErr(this,${movie.id})" alt="${esc(movie.title)}" class="w-full h-full object-cover">
+
+                        <div class="absolute top-2 right-2 bg-black/60 px-1.5 rounded text-[9px] md:text-[8px] font-bold tracking-wider text-white border border-gray-600">
+                            ${movie.type}
+                        </div>
+
+                        ${pg >= 0 ? `<div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-700"><div class="h-full bg-lumi-green" style="width:${pg}%"></div></div>` : ''}
+
+                        <div class="card-overlay absolute inset-0 bg-netflix-dark flex flex-col justify-end">
+                            <img src="${imgSrc(movie, 'w780')}" data-mid="${movie.id}" loading="lazy" onerror="imgErr(this,${movie.id})" alt="" class="absolute inset-0 h-2/3 w-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#181818] via-[#181818]/90 to-transparent"></div>
+
+                            <div class="relative p-3 z-10">
+                                <div class="flex gap-2 mb-2 items-center">
+                                    <button aria-label="Assistir" onclick="event.stopPropagation(); playMovie(${movie.id})" class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center hover:bg-gray-300 transition-colors">
+                                        <i class="fa-solid fa-play text-sm ml-0.5"></i>
+                                    </button>
+                                    <button aria-label="Minha Lista" onclick="event.stopPropagation(); toggleList(${movie.id})" class="btn-list-${movie.id} w-8 h-8 rounded-full border-2 border-gray-500 bg-[#181818]/80 text-white flex items-center justify-center hover:border-white transition-colors">
+                                        <i class="fa-solid ${listIcon} text-xs"></i>
+                                    </button>
+                                    <button aria-label="Favoritar" onclick="event.stopPropagation(); toggleFav(${movie.id})" class="btn-fav-${movie.id} w-8 h-8 rounded-full border-2 border-gray-500 bg-[#181818]/80 text-white flex items-center justify-center hover:border-white transition-colors">
+                                        <i class="${favIcon} text-xs"></i>
+                                    </button>
+                                </div>
+                                <h3 class="text-sm font-bold text-white truncate mb-1">${esc(movie.title)}</h3>
+                                <div class="flex items-center gap-2 text-[10px] text-gray-400 font-medium">
+                                    <span class="text-lumi-green border border-lumi-green px-1 rounded-sm">98%</span>
+                                    <span class="border border-gray-600 px-1 rounded-sm text-white">${movie.rating}</span>
+                                    <span>${movie.year}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            if (o.grid) return `<div>${box}<p class="touch-only mt-1.5 text-xs text-gray-300 truncate">${esc(movie.title)}</p></div>`;
+            return box;
+        }
+
+        function rowHTML(rid, title, itemsHTML) {
+            return `
+            <section class="relative group px-4 md:px-12">
+                <h2 class="text-lg md:text-xl font-bold text-white mb-2">${title}</h2>
+                <div class="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-3/4 z-30 opacity-0 group-hover:opacity-100 hidden md:flex cursor-pointer slider-arrow items-center justify-center rounded-r" onclick="scrollSlider('${rid}', -1)">
+                    <i class="fa-solid fa-chevron-left text-2xl text-white"></i>
+                </div>
+                <div id="${rid}" class="flex gap-2 overflow-x-auto overflow-y-visible no-scrollbar scroll-smooth py-2 -my-2 md:py-8 md:-my-8 pl-1 pr-12">${itemsHTML.join('')}</div>
+                <div class="absolute right-0 top-1/2 -translate-y-1/2 w-12 h-3/4 z-30 opacity-0 group-hover:opacity-100 hidden md:flex cursor-pointer slider-arrow items-center justify-center rounded-l" onclick="scrollSlider('${rid}', 1)">
+                    <i class="fa-solid fa-chevron-right text-2xl text-white"></i>
+                </div>
+            </section>`;
+        }
+
+        function renderHome() {
+            homeDirty = false;
+            const rows = [];
+            const cont = Object.entries(progress).sort((a, b) => b[1].ts - a[1].ts).map(([id]) => getMovieById(+id)).filter(Boolean);
+            if (cont.length) rows.push(rowHTML('row-cont', 'Continuar Assistindo', cont.map(m => generateCardHTML(m, { progress: true }))));
+            if (myList.size) rows.push(rowHTML('row-mylist', 'Minha Lista', [...myList].map(getMovieById).filter(Boolean).map(m => generateCardHTML(m))));
+            rows.push(rowHTML('row-1', 'Destaques Nacionais', order.destaques.map(m => generateCardHTML(m))));
+            rows.push(rowHTML('row-top', 'Top 10 Hoje', TOP10_IDS.map(getMovieById).map((m, i) =>
+                `<div class="flex items-center shrink-0 pr-2 md:pr-4"><span class="top-num">${i + 1}</span>${generateCardHTML(m, { w: 'w-[36vw] sm:w-40 md:w-52' })}</div>`)));
+            rows.push(rowHTML('row-2', 'Aclamados pela Crítica', order.aclamados.map(m => generateCardHTML(m))));
+            rows.push(rowHTML('row-series', 'Séries para Maratonar', moviesData.filter(m => m.type === 'Série').map(m => generateCardHTML(m))));
+            rows.push(rowHTML('row-films', 'Cinema Nacional', moviesData.filter(m => m.type === 'Filme').map(m => generateCardHTML(m))));
+            $('home-rows').innerHTML = rows.join('');
+        }
+
+        const GRID_CLS = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-x-2 gap-y-4 md:gap-x-3 md:gap-y-6';
+        const gridHTML = items => `<div class="${GRID_CLS}">${items.map(m => generateCardHTML(m, { grid: true })).join('')}</div>`;
+        function emptyHTML(icon, title, sub, btn) {
+            return `<div class="flex flex-col items-center text-center py-16 px-6 text-gray-400"><i class="${icon} text-4xl mb-4 text-gray-600"></i><p class="text-white font-bold text-lg mb-1">${title}</p><p class="text-sm max-w-xs">${sub}</p>${btn || ''}</div>`;
+        }
+        function chip(label, active, onclick) {
+            return `<button onclick="${onclick}" class="shrink-0 px-4 py-1.5 rounded-full border text-sm font-medium transition-colors ${active ? 'bg-white text-black border-white' : 'border-gray-600 text-gray-300 hover:border-white hover:text-white'}">${label}</button>`;
+        }
+        function listRowHTML(m) {
+            return `<div class="flex items-center gap-3 py-2 cursor-pointer" onclick="openModal(${m.id})">
+                <div class="relative w-28 sm:w-36 aspect-video shrink-0 rounded overflow-hidden bg-netflix-dark border border-gray-800">
+                    <img src="${imgSrc(m, 'w780')}" data-mid="${m.id}" loading="lazy" onerror="imgErr(this,${m.id})" alt="" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-white font-bold text-sm sm:text-base truncate">${esc(m.title)}</p>
+                    <p class="text-xs text-gray-400">${m.year} • ${m.type}</p>
+                </div>
+                <button onclick="event.stopPropagation(); playMovie(${m.id})" aria-label="Assistir" class="w-9 h-9 rounded-full border-2 border-gray-500 text-white flex items-center justify-center hover:border-white shrink-0"><i class="fa-solid fa-play text-xs ml-0.5"></i></button>
+            </div>`;
+        }
+
+        // ================= 3. Roteamento =================
+        const VIEWS = ['home', 'search', 'series', 'movies', 'list', 'profile'];
+        function go(v) { if (location.hash === '#' + v) route(); else location.hash = v; }
+
+        function updateNav() {
+            const nav = $('navbar');
+            const solid = window.scrollY > 50 || currentView !== 'home';
+            nav.classList.toggle('bg-netflix-base', solid);
+            nav.classList.toggle('bg-gradient-to-b', !solid);
+            nav.classList.toggle('from-black/80', !solid);
+            nav.classList.toggle('to-transparent', !solid);
+        }
+
+        function route() {
+            let v = location.hash.replace('#', '');
+            if (!VIEWS.includes(v)) v = 'home';
+            currentView = v;
+            document.querySelectorAll('.view').forEach(el => el.classList.toggle('hidden', el.id !== 'view-' + v));
+            document.querySelectorAll('[data-nav]').forEach(a => {
+                const on = a.dataset.nav === v;
+                if (a.classList.contains('tab')) a.classList.toggle('tab-active', on);
+                else if (a.closest('ul')) { a.classList.toggle('text-white', on); a.classList.toggle('font-bold', on); a.classList.toggle('text-gray-300', !on); }
+            });
+            closeNotif();
+            window.scrollTo(0, 0);
+            if (v === 'home') renderHome();
+            if (v === 'search') { renderSearch(); setTimeout(() => $('search-input').focus(), 60); }
+            if (v === 'series') renderBrowse('series');
+            if (v === 'movies') renderBrowse('movies');
+            if (v === 'list') renderLists();
+            if (v === 'profile') renderProfile();
+            updateNav();
+        }
+        window.addEventListener('hashchange', route);
+        document.addEventListener('click', e => {
+            const a = e.target.closest('a[data-nav]');
+            if (a && location.hash === '#' + a.dataset.nav) { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        });
+        window.addEventListener('scroll', updateNav, { passive: true });
+
+        // ================= 4. Busca =================
+        let searchGenre = null;
+        function searchMatches(q, g) {
+            const n = norm(q).trim();
+            return moviesData.filter(m => {
+                if (g && !m.genres.includes(g)) return false;
+                if (!n) return true;
+                const hay = norm([m.title, m.cast, m.director, m.genres.join(' '), m.type, m.year].join(' '));
+                return n.split(/\s+/).every(t => hay.includes(t));
+            });
+        }
+        function saveRecent(q) {
+            q = (q || '').trim(); if (q.length < 2) return;
+            recent = [q, ...recent.filter(r => norm(r) !== norm(q))].slice(0, 6);
+            LSS('recent', recent);
+        }
+        function renderSearch() {
+            const input = $('search-input');
+            const q = input.value;
+            $('search-clear').classList.toggle('hidden', !q); $('search-clear').classList.toggle('flex', !!q);
+            $('search-chips').innerHTML = GENRES.map((g, i) => chip(g, searchGenre === g, `setSearchGenre(${i})`)).join('');
+            const active = q.trim() || searchGenre;
+            $('search-idle').classList.toggle('hidden', !!active);
+            $('search-results').classList.toggle('hidden', !active);
+            if (active) {
+                const res = searchMatches(q, searchGenre);
+                $('search-count').textContent = `${res.length} ${res.length === 1 ? 'resultado' : 'resultados'}`;
+                $('search-grid').innerHTML = res.length
+                    ? gridHTML(res)
+                    : emptyHTML('fa-solid fa-film', q.trim() ? `Nenhum resultado para “${esc(q.trim())}”` : 'Nada por aqui', 'Tente outro título, ator ou gênero.');
+            } else {
+                let h = '';
+                if (recent.length) {
+                    h += `<div class="flex items-center justify-between mb-1"><h2 class="text-lg font-bold text-white">Pesquisas recentes</h2><button onclick="clearRecent()" class="text-sm text-gray-400 hover:text-white">Limpar</button></div>
+                    <div class="mb-8">${recent.map((r, i) => `<div class="flex items-center gap-3 py-2.5 border-b border-white/5"><i class="fa-solid fa-clock-rotate-left text-gray-500 text-sm"></i><button class="flex-1 text-left text-gray-200 truncate" onclick="useRecent(${i})">${esc(r)}</button><button aria-label="Remover" onclick="removeRecent(${i})" class="text-gray-500 hover:text-white px-2"><i class="fa-solid fa-xmark"></i></button></div>`).join('')}</div>`;
+                }
+                h += `<h2 class="text-lg font-bold text-white mb-1">Mais buscados</h2><div>${TOP10_IDS.slice(0, 6).map(getMovieById).map(listRowHTML).join('')}</div>`;
+                $('search-idle').innerHTML = h;
+            }
+        }
+        function setSearchGenre(i) { const g = GENRES[i]; searchGenre = searchGenre === g ? null : g; renderSearch(); }
+        function clearSearch() { $('search-input').value = ''; searchGenre = null; renderSearch(); $('search-input').focus(); }
+        function useRecent(i) { $('search-input').value = recent[i]; renderSearch(); }
+        function removeRecent(i) { recent.splice(i, 1); LSS('recent', recent); renderSearch(); }
+        function clearRecent(fromProfile) { recent = []; LSS('recent', recent); if (fromProfile) toast('Histórico de pesquisa limpo'); else renderSearch(); }
+
+        // ================= 5. Séries / Filmes / Minha Lista / Perfil =================
+        const browseGenre = { series: null, movies: null };
+        function renderBrowse(kind) {
+            const type = kind === 'series' ? 'Série' : 'Filme';
+            const base = moviesData.filter(m => m.type === type);
+            const gs = [...new Set(base.flatMap(m => m.genres))].sort((a, b) => a.localeCompare(b, 'pt'));
+            const g = browseGenre[kind];
+            $('chips-' + kind).innerHTML = chip('Todos', !g, `setBrowseGenre('${kind}',-1)`) + gs.map((x, i) => chip(x, g === x, `setBrowseGenre('${kind}',${i})`)).join('');
+            const items = base.filter(m => !g || m.genres.includes(g));
+            $('grid-' + kind).innerHTML = items.length ? gridHTML(items) : emptyHTML('fa-solid fa-film', 'Nada por aqui', 'Nenhum título neste gênero.');
+        }
+        function setBrowseGenre(kind, i) {
+            const type = kind === 'series' ? 'Série' : 'Filme';
+            const gs = [...new Set(moviesData.filter(m => m.type === type).flatMap(m => m.genres))].sort((a, b) => a.localeCompare(b, 'pt'));
+            browseGenre[kind] = i < 0 ? null : gs[i];
+            renderBrowse(kind);
+        }
+
+        let listTab = 'list';
+        function renderLists() {
+            const tabBtn = (id, label, n) => `<button onclick="setListTab('${id}')" class="px-4 py-2 rounded ${listTab === id ? 'bg-white text-black' : 'text-gray-300 hover:text-white'}">${label} (${n})</button>`;
+            $('list-tabs').innerHTML = tabBtn('list', 'Minha Lista', myList.size) + tabBtn('favs', 'Favoritos', myFavs.size);
+            const set = listTab === 'list' ? myList : myFavs;
+            const items = [...set].map(getMovieById).filter(Boolean);
+            $('list-content').innerHTML = items.length
+                ? gridHTML(items)
+                : emptyHTML(listTab === 'list' ? 'fa-regular fa-bookmark' : 'fa-regular fa-heart',
+                    listTab === 'list' ? 'Sua lista está vazia' : 'Nenhum favorito ainda',
+                    listTab === 'list' ? 'Toque em + em qualquer título para salvar e assistir depois.' : 'Toque no coração para marcar seus títulos preferidos.',
+                    `<button onclick="go('home')" class="mt-5 bg-white text-black px-6 py-2.5 rounded font-bold">Explorar títulos</button>`);
+        }
+        function setListTab(t) { listTab = t; renderLists(); }
+
+        function renderProfile() {
+            const stat = (n, l) => `<div class="bg-netflix-dark border border-gray-800 rounded-lg py-4 text-center"><p class="text-2xl font-black text-white">${n}</p><p class="text-xs text-gray-400">${l}</p></div>`;
+            $('profile-stats').innerHTML = stat(myList.size, 'Na lista') + stat(myFavs.size, 'Favoritos') + stat(watched.size, 'Assistidos');
+            const sw = $('set-autonext');
+            sw.classList.toggle('bg-lumi-green', settings.autonext); sw.classList.toggle('bg-gray-600', !settings.autonext);
+            sw.firstElementChild.classList.toggle('translate-x-5', settings.autonext);
+            sw.setAttribute('aria-checked', settings.autonext);
+        }
+        function toggleAutoNext() { settings.autonext = !settings.autonext; LSS('settings', settings); renderProfile(); }
+        function clearProgress() { progress = {}; persist(); homeDirty = true; toast('“Continuar Assistindo” limpo'); }
+
+        // ================= 6. Notificações =================
+        const NOTIFS = [
+            { id: 11, tag: 'Novidade', text: 'O Auto da Compadecida 2 já está no LumiPlay', when: 'Hoje' },
+            { id: 6, tag: 'Em alta', text: 'Cangaço Novo está entre os mais assistidos', when: 'Ontem' },
+            { id: 3, tag: 'Recomendado', text: 'Bacurau: um thriller para a sua noite', when: 'Esta semana' }
+        ];
+        function updateNotifDot() { $('notif-dot').classList.toggle('hidden', !!LSG('notif_seen')); }
+        function toggleNotif(e) {
+            e.stopPropagation();
+            const p = $('notif-panel');
+            if (p.classList.contains('hidden')) {
+                $('notif-list').innerHTML = NOTIFS.map(n => {
+                    const m = getMovieById(n.id);
+                    return `<div class="flex gap-3 p-3 hover:bg-white/5 cursor-pointer" onclick="closeNotif(); openModal(${n.id})">
+                        <div class="w-24 aspect-video shrink-0 rounded overflow-hidden bg-netflix-base"><img src="${imgSrc(m, 'w780')}" data-mid="${m.id}" onerror="imgErr(this,${m.id})" alt="" class="w-full h-full object-cover"></div>
+                        <div class="min-w-0"><p class="text-[11px] text-lumi-green font-bold">${n.tag}</p><p class="text-sm text-white leading-snug">${n.text}</p><p class="text-[11px] text-gray-500 mt-0.5">${n.when}</p></div></div>`;
+                }).join('');
+                p.classList.remove('hidden'); LSS('notif_seen', true); updateNotifDot();
+            } else closeNotif();
+        }
+        function closeNotif() { $('notif-panel').classList.add('hidden'); }
+        document.addEventListener('click', e => { if (!e.target.closest('#notif-panel') && !e.target.closest('#btn-bell')) closeNotif(); });
+
+        // ================= 7. Interações (lista, favoritos, toast) =================
+        let toastTimer = null;
+        function toast(msg) {
+            const t = $('toast'); t.textContent = msg; t.classList.remove('opacity-0');
+            clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.add('opacity-0'), 2200);
+        }
+        function toggleList(id) {
+            const on = !myList.has(id); on ? myList.add(id) : myList.delete(id);
+            persist(); homeDirty = true; syncUIIcons('list', id);
+            toast(on ? 'Adicionado à Minha Lista' : 'Removido da Minha Lista');
+            if (currentView === 'list') renderLists();
+        }
+        function toggleFav(id) {
+            const on = !myFavs.has(id); on ? myFavs.add(id) : myFavs.delete(id);
+            persist(); syncUIIcons('fav', id);
+            toast(on ? 'Adicionado aos Favoritos' : 'Removido dos Favoritos');
+            if (currentView === 'list') renderLists();
+        }
+        function syncUIIcons(type, id) {
+            if (type === 'list') {
+                const inList = myList.has(id);
+                document.querySelectorAll(`.btn-list-${id}`).forEach(btn => { btn.innerHTML = `<i class="fa-solid ${inList ? 'fa-check' : 'fa-plus'} text-xs"></i>`; });
+            } else {
+                const inFavs = myFavs.has(id);
+                document.querySelectorAll(`.btn-fav-${id}`).forEach(btn => { btn.innerHTML = `<i class="${inFavs ? 'fa-solid fa-heart text-lumi-green' : 'fa-regular fa-heart'} text-xs"></i>`; });
+            }
+            if (currentModalMovieId === id) updateModalButtons(id);
+        }
+        function shareCurrent() {
+            const m = getMovieById(currentModalMovieId); if (!m) return;
+            const data = { title: m.title + ' • LumiPlay', text: 'Assista ' + m.title + ' no LumiPlay', url: location.href.split('#')[0] };
+            if (navigator.share) { navigator.share(data).catch(() => {}); }
+            else if (navigator.clipboard) { navigator.clipboard.writeText(data.url).then(() => toast('Link copiado')).catch(() => {}); }
+        }
+
+        // ================= 8. Modal =================
+        function pushOv(n) { try { history.pushState({ ov: n }, ''); return true; } catch (e) { return false; } }
+        function updateLock() { document.body.classList.toggle('modal-open', currentModalMovieId !== null || PL.open); }
+        function epDuration(m, n) { return 42 + ((n * 7 + m.id * 3) % 13); }
+        function episodesHTML(m, handler) {
+            let h = '';
+            const cur = progress[m.id] ? progress[m.id].ep : 0;
+            for (let n = 1; n <= m.eps; n++) {
+                h += `<div onclick="${handler(n)}" class="flex items-center gap-3 p-2 md:p-3 rounded-md cursor-pointer hover:bg-white/5 active:bg-white/10">
+                    <span class="w-6 text-center text-lg text-gray-400 font-bold">${n}</span>
+                    <div class="relative w-28 sm:w-32 aspect-video shrink-0 rounded overflow-hidden bg-netflix-base">
+                        <img src="${imgSrc(m, 'w780')}" data-mid="${m.id}" loading="lazy" onerror="imgErr(this,${m.id})" alt="" class="w-full h-full object-cover opacity-90">
+                        <span class="absolute inset-0 flex items-center justify-center"><i class="fa-solid fa-play text-white bg-black/50 rounded-full w-8 h-8 flex items-center justify-center text-xs"></i></span>
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-white text-sm font-bold truncate">Episódio ${n}</p>
+                        <p class="text-xs text-gray-400">${epDuration(m, n)} min${cur === n ? ' • <span class="text-lumi-green">Em andamento</span>' : ''}</p>
+                    </div>
+                </div>`;
+            }
+            return h;
+        }
+        function openModal(id) {
+            const m = getMovieById(id); if (!m) return;
+            const was = currentModalMovieId !== null;
+            if (currentView === 'search') saveRecent($('search-input').value);
+            closeNotif();
+            currentModalMovieId = id;
+
+            const mi = $('modal-img');
+            mi.onerror = () => { mi.onerror = null; mi.src = m.img; };
+            mi.src = imgSrc(m, 'w1280');
+            $('modal-title').textContent = m.title;
+            $('modal-year').textContent = m.year;
+            $('modal-rating').textContent = m.rating;
+            $('modal-type').textContent = m.type;
+            $('modal-desc').textContent = m.desc;
+            $('modal-cast').textContent = m.cast;
+            $('modal-director').textContent = m.director;
+            $('modal-genres').textContent = ['Nacional', ...m.genres].join(', ');
+            refreshModalPlayLabel();
+
+            const isSeries = m.type === 'Série';
+            $('modal-eps-wrap').classList.toggle('hidden', !isSeries);
+            if (isSeries) $('modal-eps').innerHTML = episodesHTML(m, n => `playMovie(${m.id},${n})`);
+
+            const sim = moviesData.filter(x => x.id !== id)
+                .map(x => ({ x, s: x.genres.filter(g => m.genres.includes(g)).length + (x.type === m.type ? 0.5 : 0) }))
+                .filter(o => o.s > 0).sort((a, b) => b.s - a.s).slice(0, 6).map(o => o.x);
+            $('modal-similar').innerHTML = sim.map(x => `
+                <div class="bg-netflix-base rounded-md overflow-hidden cursor-pointer border border-gray-800 active:opacity-80" onclick="openModal(${x.id})">
+                    <div class="aspect-video relative"><img src="${imgSrc(x, 'w780')}" data-mid="${x.id}" loading="lazy" onerror="imgErr(this,${x.id})" alt="" class="w-full h-full object-cover"></div>
+                    <div class="p-2"><p class="text-white text-xs md:text-sm font-bold truncate">${esc(x.title)}</p><p class="text-[11px] text-gray-400">${x.year} • ${x.rating}</p></div>
+                </div>`).join('');
+
+            updateModalButtons(id);
+
+            const modal = $('movie-modal'), sheet = $('modal-sheet');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            sheet.scrollTop = 0;
+            if (!was) {
+                sheet.classList.remove('modal-animate'); void sheet.offsetWidth; sheet.classList.add('modal-animate');
+                modalHist = pushOv('modal');
+            }
+            updateLock();
+        }
+        function refreshModalPlayLabel() {
+            if (currentModalMovieId === null) return;
+            const m = getMovieById(currentModalMovieId);
+            const p = progress[m.id];
+            $('modal-play-label').textContent = p ? 'Continuar' : 'Assistir';
+        }
+        function hideModalUI() {
+            const modal = $('movie-modal'), sheet = $('modal-sheet');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+            sheet.style.transform = ''; sheet.style.transition = '';
+            currentModalMovieId = null; modalHist = false;
+            updateLock();
+            if (homeDirty && currentView === 'home') renderHome();
+        }
+        function closeModal() {
+            if (currentModalMovieId === null) return;
+            if (modalHist) { history.back(); setTimeout(() => { if (currentModalMovieId !== null) hideModalUI(); }, 350); }
+            else hideModalUI();
+        }
+        function updateModalButtons(id) {
+            const btnAdd = $('btn-modal-add'), btnFav = $('btn-modal-fav');
+            btnAdd.onclick = () => toggleList(id);
+            btnFav.onclick = () => toggleFav(id);
+            btnAdd.innerHTML = `<i class="fa-solid ${myList.has(id) ? 'fa-check text-white' : 'fa-plus'}"></i>`;
+            btnFav.innerHTML = `<i class="${myFavs.has(id) ? 'fa-solid fa-heart text-lumi-green' : 'fa-regular fa-heart text-white'}"></i>`;
+        }
+        // Arrastar para baixo fecha o bottom sheet (celular)
+        (function () {
+            const sheet = $('modal-sheet'); let sy = 0, dy = 0, drag = false;
+            sheet.addEventListener('touchstart', e => {
+                if (sheet.scrollTop <= 0 && window.innerWidth < 768) { sy = e.touches[0].clientY; dy = 0; drag = true; sheet.style.transition = 'none'; } else drag = false;
+            }, { passive: true });
+            sheet.addEventListener('touchmove', e => {
+                if (!drag) return;
+                dy = e.touches[0].clientY - sy;
+                if (dy > 0) sheet.style.transform = `translateY(${dy}px)`; else { dy = 0; sheet.style.transform = ''; }
+            }, { passive: true });
+            sheet.addEventListener('touchend', () => {
+                if (!drag) return; drag = false;
+                sheet.style.transition = 'transform .25s ease';
+                if (dy > 110) closeModal(); else sheet.style.transform = '';
+            });
+        })();
+
+        // ================= 9. Player =================
+        const vid = $('pl-video');
+        const PL = { open: false, id: null, ep: 1, srcs: [], srcIdx: 0, resume: 0, uiTimer: null, lastSave: 0, dragging: false, menuOpen: false, countTimer: null };
+        const coarse = () => window.matchMedia('(pointer:coarse)').matches;
+
+        function playMovie(id, ep) { openPlayer(id, ep); }
+
+        function openPlayer(id, ep) {
+            const m = getMovieById(id); if (!m) return;
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            const p = progress[id];
+            PL.id = id;
+            PL.ep = m.type === 'Série' ? (ep || (p && p.ep) || 1) : 1;
+            PL.resume = p && p.ep === PL.ep ? p.pct : 0;
+
+            if (!PL.open) {
+                PL.open = true;
+                $('player').classList.remove('hidden');
+                playerHist = pushOv('player');
+                if (coarse()) enterFs();
+            }
+            updateLock();
+            hideEnded(); closeDialog(); $('pl-err').classList.add('hidden'); $('pl-err').classList.remove('flex');
+            vid.playbackRate = 1; $('pl-speed-lbl').textContent = '1x';
+            $('pl-pip').classList.toggle('hidden', !document.pictureInPictureEnabled);
+            $('pl-pip').classList.toggle('flex', !!document.pictureInPictureEnabled);
+            updatePlayerMeta();
+            loadCurrent();
+            showUI();
+        }
+        function loadCurrent() {
+            const m = getMovieById(PL.id);
+            PL.srcs = [m.src, ...DEMO_SRC].filter(Boolean);
+            PL.srcIdx = 0;
+            setSrc();
+        }
+        function setSrc() {
+            $('pl-spin').classList.remove('hidden'); $('pl-spin').classList.add('flex');
+            vid.src = PL.srcs[PL.srcIdx];
+            vid.load();
+            const pr = vid.play();
+            if (pr && pr.catch) pr.catch(() => { setPlayIcon(false); });
+        }
+        function retryPlayer() { $('pl-err').classList.add('hidden'); $('pl-err').classList.remove('flex'); PL.srcIdx = 0; setSrc(); }
+
+        function updatePlayerMeta() {
+            const m = getMovieById(PL.id);
+            const isS = m.type === 'Série';
+            $('pl-title').textContent = m.title;
+            $('pl-sub').textContent = isS ? `Episódio ${PL.ep} • ${epDuration(m, PL.ep)} min` : `${m.year} • ${m.genres.join(', ')}`;
+            $('pl-eps-btn').classList.toggle('hidden', !isS); $('pl-eps-btn').classList.toggle('flex', isS);
+            const hasNext = isS && PL.ep < m.eps;
+            $('pl-next-btn').classList.toggle('hidden', !hasNext); $('pl-next-btn').classList.toggle('flex', hasNext);
+            try {
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({ title: m.title, artist: 'LumiPlay', artwork: [{ src: imgSrc(m, 'w780'), sizes: '780x439' }] });
+                    navigator.mediaSession.setActionHandler('play', () => vid.play());
+                    navigator.mediaSession.setActionHandler('pause', () => vid.pause());
+                    navigator.mediaSession.setActionHandler('seekbackward', () => skip(-10));
+                    navigator.mediaSession.setActionHandler('seekforward', () => skip(10));
+                }
+            } catch (e) {}
+        }
+
+        function hidePlayerUI() {
+            if (!PL.open) return;
+            saveProgress(true);
+            PL.open = false; playerHist = false;
+            clearTimeout(PL.uiTimer); clearInterval(PL.countTimer);
+            vid.pause(); vid.removeAttribute('src'); vid.load();
+            exitFs();
+            closeDialog(); hideEnded();
+            $('player').classList.add('hidden');
+            homeDirty = true;
+            updateLock();
+            refreshModalPlayLabel();
+            if (currentModalMovieId !== null) { const m = getMovieById(currentModalMovieId); if (m.type === 'Série') $('modal-eps').innerHTML = episodesHTML(m, n => `playMovie(${m.id},${n})`); }
+            if (currentModalMovieId === null && currentView === 'home') renderHome();
+        }
+        function closePlayer() {
+            if (!PL.open) return;
+            if (playerHist) { history.back(); setTimeout(() => { if (PL.open) hidePlayerUI(); }, 350); }
+            else hidePlayerUI();
+        }
+        window.addEventListener('popstate', () => {
+            const ov = history.state && history.state.ov;
+            if (ov !== 'player' && PL.open) hidePlayerUI();
+            if (ov !== 'player' && ov !== 'modal' && currentModalMovieId !== null) hideModalUI();
+        });
+
+        function saveProgress(force) {
+            if (!PL.id || !isFinite(vid.duration) || !vid.duration) return;
+            const now = Date.now();
+            if (!force && now - PL.lastSave < 5000) return;
+            PL.lastSave = now;
+            const pct = vid.currentTime / vid.duration;
+            if (pct >= 0.95) { delete progress[PL.id]; watched.add(PL.id); }
+            else if (pct > 0.01) progress[PL.id] = { pct, ep: PL.ep, ts: now };
+            persist();
+        }
+
+        // --- formatação e UI ---
+        function fmt(t) {
+            if (!isFinite(t)) return '0:00';
+            t = Math.max(0, Math.floor(t));
+            const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+            return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+        }
+        function setSeekUI(p) { $('pl-fill').style.width = (p * 100) + '%'; $('pl-thumb').style.left = (p * 100) + '%'; }
+        function setPlayIcon(playing) {
+            $('pl-play-icon').className = 'fa-solid ' + (playing ? 'fa-pause' : 'fa-play ml-1') + ' text-3xl';
+        }
+        function togglePlay() { if (vid.paused || vid.ended) { vid.play().catch(() => {}); } else vid.pause(); showUI(); }
+        function skip(sec) {
+            if (!isFinite(vid.duration)) return;
+            vid.currentTime = Math.min(vid.duration, Math.max(0, vid.currentTime + sec));
+            const el = $(sec < 0 ? 'pl-fb-l' : 'pl-fb-r');
+            el.classList.remove('fb-anim'); void el.offsetWidth; el.classList.add('fb-anim');
+            showUI();
+        }
+        function showUI() {
+            $('pl-ui').classList.remove('ui-hidden'); $('player').style.cursor = '';
+            clearTimeout(PL.uiTimer);
+            if (!vid.paused && !PL.dragging && !PL.menuOpen) PL.uiTimer = setTimeout(hideUI, 3200);
+        }
+        function hideUI() {
+            if (vid.paused || PL.dragging || PL.menuOpen) return;
+            $('pl-ui').classList.add('ui-hidden'); $('player').style.cursor = 'none';
+        }
+        function toggleUI() { $('pl-ui').classList.contains('ui-hidden') ? showUI() : hideUI(); }
+
+        // --- eventos do vídeo ---
+        vid.addEventListener('loadedmetadata', () => {
+            $('pl-dur').textContent = fmt(vid.duration);
+            if (PL.resume > 0.02 && PL.resume < 0.95 && isFinite(vid.duration)) vid.currentTime = PL.resume * vid.duration;
+            PL.resume = 0;
+        });
+        vid.addEventListener('timeupdate', () => {
+            if (!PL.dragging && vid.duration) { setSeekUI(vid.currentTime / vid.duration); $('pl-cur').textContent = fmt(vid.currentTime); }
+            saveProgress(false);
+        });
+        vid.addEventListener('progress', () => {
+            if (vid.buffered.length && vid.duration) $('pl-buf').style.width = (vid.buffered.end(vid.buffered.length - 1) / vid.duration * 100) + '%';
+        });
+        vid.addEventListener('play', () => { setPlayIcon(true); showUI(); });
+        vid.addEventListener('pause', () => { setPlayIcon(false); showUI(); });
+        vid.addEventListener('waiting', () => { $('pl-spin').classList.remove('hidden'); $('pl-spin').classList.add('flex'); });
+        const spinOff = () => { $('pl-spin').classList.add('hidden'); $('pl-spin').classList.remove('flex'); };
+        vid.addEventListener('playing', spinOff); vid.addEventListener('canplay', spinOff);
+        vid.addEventListener('ended', onEnded);
+        vid.addEventListener('error', () => {
+            if (!PL.open) return;
+            if (PL.srcIdx < PL.srcs.length - 1) { PL.srcIdx++; setSrc(); return; }
+            spinOff();
+            $('pl-err').classList.remove('hidden'); $('pl-err').classList.add('flex');
+        });
+        vid.addEventListener('ratechange', () => { $('pl-speed-lbl').textContent = vid.playbackRate + 'x'; });
+        vid.addEventListener('volumechange', () => {
+            $('pl-vol').value = vid.muted ? 0 : vid.volume;
+            $('pl-vol-icon').className = 'fa-solid ' + (vid.muted || vid.volume === 0 ? 'fa-volume-xmark' : vid.volume < 0.5 ? 'fa-volume-low' : 'fa-volume-high');
+        });
+        $('pl-vol').addEventListener('input', e => { vid.muted = false; vid.volume = +e.target.value; });
+        function toggleMute() { vid.muted = !vid.muted; }
+
+        // --- barra de progresso (arrastar) ---
+        (function () {
+            const seek = $('pl-seek');
+            const pct = e => { const r = seek.getBoundingClientRect(); return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); };
+            const scrub = e => { const p = pct(e); setSeekUI(p); if (vid.duration) $('pl-cur').textContent = fmt(p * vid.duration); };
+            seek.addEventListener('pointerdown', e => { PL.dragging = true; try { seek.setPointerCapture(e.pointerId); } catch (x) {} scrub(e); showUI(); });
+            seek.addEventListener('pointermove', e => { if (PL.dragging) scrub(e); });
+            seek.addEventListener('pointerup', e => {
+                if (!PL.dragging) return; PL.dragging = false;
+                if (vid.duration) vid.currentTime = pct(e) * vid.duration;
+                showUI();
+            });
+            seek.addEventListener('pointercancel', () => { PL.dragging = false; });
+        })();
+
+        // --- toques: 1x mostra/oculta controles, 2x nas laterais pula 10s ---
+        (function () {
+            let last = { t: 0, z: 9 }, timer = null;
+            $('pl-tap').addEventListener('pointerup', e => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                const w = window.innerWidth, x = e.clientX;
+                const z = x < w * 0.35 ? -1 : x > w * 0.65 ? 1 : 0;
+                const now = Date.now();
+                const mouse = e.pointerType === 'mouse';
+                if (now - last.t < 300 && (mouse || last.z === z)) {
+                    clearTimeout(timer); last.t = 0;
+                    if (mouse) toggleFs(); else if (z === 0) togglePlay(); else skip(z * 10);
+                } else {
+                    last = { t: now, z };
+                    clearTimeout(timer);
+                    timer = setTimeout(() => { mouse ? togglePlay() : toggleUI(); }, 260);
+                }
+            });
+            $('player').addEventListener('mousemove', () => { if (PL.open) showUI(); });
+        })();
+
+        // --- tela cheia / PiP ---
+        const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+        function enterFs() {
+            const el = $('player'); const f = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (f) { const r = f.call(el); if (r && r.catch) r.catch(() => {}); }
+            else if (vid.webkitEnterFullscreen) { try { vid.webkitEnterFullscreen(); } catch (e) {} }
+        }
+        function exitFs() {
+            const f = document.exitFullscreen || document.webkitExitFullscreen;
+            if (fsEl() && f) { const r = f.call(document); if (r && r.catch) r.catch(() => {}); }
+            try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+        }
+        function toggleFs() { fsEl() ? exitFs() : enterFs(); }
+        function onFsChange() {
+            const on = !!fsEl();
+            $('pl-fs-icon').className = 'fa-solid ' + (on ? 'fa-compress' : 'fa-expand') + ' text-lg leading-6';
+            if (on && coarse()) { try { const p = screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+        }
+        document.addEventListener('fullscreenchange', onFsChange);
+        document.addEventListener('webkitfullscreenchange', onFsChange);
+        function togglePip() {
+            if (document.pictureInPictureElement) document.exitPictureInPicture().catch(() => {});
+            else if (vid.requestPictureInPicture) vid.requestPictureInPicture().catch(() => {});
+        }
+
+        // --- diálogos (velocidade / episódios) ---
+        function openDialog(html) {
+            $('pl-dialog-box').innerHTML = html;
+            const d = $('pl-dialog'); d.classList.remove('hidden'); d.classList.add('flex');
+            PL.menuOpen = true; clearTimeout(PL.uiTimer);
+        }
+        function closeDialog() {
+            const d = $('pl-dialog'); if (d.classList.contains('hidden')) return;
+            d.classList.add('hidden'); d.classList.remove('flex');
+            PL.menuOpen = false; if (PL.open) showUI();
+        }
+        function openSpeed() {
+            const rates = [0.5, 0.75, 1, 1.25, 1.5, 2];
+            openDialog(`<h3 class="text-white font-bold text-lg mb-2 px-1">Velocidade de reprodução</h3>` + rates.map(r => {
+                const on = vid.playbackRate === r;
+                return `<button onclick="setRate(${r})" class="w-full flex items-center justify-between px-3 py-3 rounded-md hover:bg-white/5 text-left ${on ? 'text-white font-bold' : 'text-gray-300'}"><span>${r === 1 ? 'Normal' : r + 'x'}</span>${on ? '<i class="fa-solid fa-check text-lumi-green"></i>' : ''}</button>`;
+            }).join(''));
+        }
+        function setRate(r) { vid.playbackRate = r; closeDialog(); }
+        function openEpisodes() {
+            const m = getMovieById(PL.id);
+            openDialog(`<h3 class="text-white font-bold text-lg mb-2 px-1">${esc(m.title)} • Episódios</h3>` + episodesHTML(m, n => `playEpisode(${n})`));
+        }
+        function playEpisode(n) { closeDialog(); PL.ep = n; PL.resume = 0; hideEnded(); updatePlayerMeta(); loadCurrent(); }
+
+        // --- fim do vídeo / próximo episódio ---
+        function hideEnded() { clearInterval(PL.countTimer); const e = $('pl-end'); e.classList.add('hidden'); e.classList.remove('flex'); }
+        function playNext() {
+            const m = getMovieById(PL.id);
+            if (m.type !== 'Série' || PL.ep >= m.eps) return;
+            progress[PL.id] = { pct: 0, ep: PL.ep + 1, ts: Date.now() }; persist();
+            PL.ep++; PL.resume = 0; hideEnded(); updatePlayerMeta(); loadCurrent();
+        }
+        function replay() { hideEnded(); PL.resume = 0; vid.currentTime = 0; vid.play().catch(() => {}); }
+        function onEnded() {
+            saveProgress(true);
+            const m = getMovieById(PL.id);
+            const hasNext = m.type === 'Série' && PL.ep < m.eps;
+            const btnP = 'bg-white text-black px-6 py-2.5 rounded font-bold hover:bg-gray-200';
+            const btnS = 'bg-gray-500/70 text-white px-6 py-2.5 rounded font-bold hover:bg-gray-500/50';
+            let h;
+            if (hasNext) {
+                h = `<p class="text-gray-300 text-sm mb-1">Episódio ${PL.ep} concluído</p>
+                     <h3 class="text-white text-2xl md:text-3xl font-black mb-3">Próximo: Episódio ${PL.ep + 1}</h3>
+                     ${settings.autonext ? '<p id="pl-count" class="text-gray-300 text-sm mb-5"></p>' : '<div class="mb-5"></div>'}
+                     <div class="flex flex-wrap justify-center gap-3">
+                        <button onclick="playNext()" class="${btnP}"><i class="fa-solid fa-play mr-2"></i>${settings.autonext ? 'Assistir agora' : 'Próximo episódio'}</button>
+                        <button onclick="${settings.autonext ? 'hideEnded()' : 'replay()'}" class="${btnS}">${settings.autonext ? 'Cancelar' : 'Rever episódio'}</button>
+                        <button onclick="closePlayer()" class="${btnS}">Voltar</button>
+                     </div>`;
+            } else {
+                h = `<i class="fa-solid fa-circle-check text-4xl text-lumi-green mb-4"></i>
+                     <h3 class="text-white text-2xl md:text-3xl font-black mb-1">${m.type === 'Série' ? 'Você chegou ao último episódio' : 'Você terminou ' + esc(m.title)}</h3>
+                     <p class="text-gray-400 text-sm mb-6">Que tal explorar mais títulos nacionais?</p>
+                     <div class="flex flex-wrap justify-center gap-3">
+                        <button onclick="replay()" class="${btnP}"><i class="fa-solid fa-rotate-right mr-2"></i>Assistir novamente</button>
+                        <button onclick="closePlayer()" class="${btnS}">Voltar</button>
+                     </div>`;
+            }
+            const e = $('pl-end'); e.innerHTML = h; e.classList.remove('hidden'); e.classList.add('flex');
+            if (hasNext && settings.autonext) {
+                let n = 5; const c = $('pl-count');
+                c.textContent = `Começando em ${n}s`;
+                clearInterval(PL.countTimer);
+                PL.countTimer = setInterval(() => { n--; if (n <= 0) { playNext(); } else c.textContent = `Começando em ${n}s`; }, 1000);
+            }
+        }
+
+        // --- teclado ---
+        document.addEventListener('keydown', e => {
+            if (PL.open) {
+                const k = e.key;
+                if (k === ' ' || k === 'k') { e.preventDefault(); togglePlay(); }
+                else if (k === 'ArrowLeft') skip(-10);
+                else if (k === 'ArrowRight') skip(10);
+                else if (k === 'ArrowUp') { e.preventDefault(); vid.muted = false; vid.volume = Math.min(1, vid.volume + 0.1); }
+                else if (k === 'ArrowDown') { e.preventDefault(); vid.volume = Math.max(0, vid.volume - 0.1); }
+                else if (k === 'f') toggleFs();
+                else if (k === 'm') toggleMute();
+                else if (k === 'Escape') { if (PL.menuOpen) closeDialog(); else if (!fsEl()) closePlayer(); }
+                showUI();
+                return;
+            }
+            if (e.key === 'Escape') { if (currentModalMovieId !== null) closeModal(); else closeNotif(); }
+        });
+
+        // ================= 10. Utilidades gerais =================
+        function scrollSlider(rowId, direction) {
+            const container = $(rowId);
+            const scrollAmount = window.innerWidth * 0.6;
+            container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
+        }
+
+        // Busca: eventos do campo
+        $('search-input').addEventListener('input', renderSearch);
+        $('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') { saveRecent(e.target.value); e.target.blur(); } });
+
+        // ================= Inicialização =================
+        document.addEventListener('DOMContentLoaded', () => {
+            preloadTMDB();
+            updateNotifDot();
+            route();
+            enrichTMDB();
+        });
+    </script>
+</body>
+</html>
